@@ -1,0 +1,5 @@
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Hello from contact-advisors-frontend", bodyClasses = None) {
+    <h1>Hi @utr, hello from contact-advisors-frontend !</h1>
+}

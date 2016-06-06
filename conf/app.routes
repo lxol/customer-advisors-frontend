@@ -1,0 +1,3 @@
+# microservice specific routes
+
+GET        /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessage.inbox(utr: String)
