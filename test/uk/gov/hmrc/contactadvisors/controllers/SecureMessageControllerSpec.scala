@@ -16,16 +16,28 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
-import play.api.mvc._
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import play.api.http.Status
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-import scala.concurrent.Future
+
+class SecureMessageControllerSpec extends UnitSpec with WithFakeApplication{
+
+  val fakeRequest = FakeRequest("GET", "/")
 
 
-object SecureMessage extends SecureMessage
+  "GET /" should {
+    "return 200" in {
+      val result = SecureMessageController.inbox("123")(fakeRequest)
+      status(result) shouldBe Status.OK
+    }
 
-trait SecureMessage extends FrontendController {
-  def inbox(utr: String) = Action.async { implicit request =>
-		Future.successful(Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr)))
+    "return HTML" in {
+      val result = SecureMessageController.inbox("123")(fakeRequest)
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+    }
   }
+
 }
