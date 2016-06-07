@@ -1,5 +1,35 @@
-@(utr: String)(implicit request: Request[_])
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String, adviceForm: Form[uk.gov.hmrc.contactadvisors.controllers.Advice])(implicit request: Request[_])
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Hello from contact-advisors-frontend", bodyClasses = None) {
     <h1>Hi @utr, hello from contact-advisors-frontend !</h1>
+
+    @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submit(utr), 'id -> "form-submit-customer-advice") {
+        <fieldset>
+            <div class="form-field">
+            @input(
+                adviceForm("subject"),
+                '_label -> "Advice subject",
+                '_divClass -> "form-field",
+                '_inputClass -> "input--medium input--cleared",
+                '_type -> "text",
+                'parentField -> adviceForm("advice")
+            )
+            </div>
+            <div class="form-field">
+            @textArea(
+                adviceForm("message"),
+                '_divClass -> "form-field",
+                '_inputClass -> "input--medium input--cleared",
+                '_label -> "Advice message"
+            )
+            </div>
+        </fieldset>
+
+        <div class="form-field">
+            <button id="submit-advice" class="button" type="submit">Send</button>
+        </div>
+    }
 }

@@ -16,16 +16,38 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import play.api.data._
+import play.api.data.Forms._
+import play.api.data.format.Formats._
 import play.api.mvc._
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
+trait SecureMessageController extends FrontendController {
+  def inbox(utr: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, adviceForm))
+    )
+  }
+
+  def submit(utr: String) = Action.async { implicit request =>
+    adviceForm.bindFromRequest.fold(
+      formWithErrors => ???,
+      advice => Future.successful(
+        Redirect(routes.SecureMessageController.inbox("Success_sending_message").url)
+      )
+    )
+  }
+
+  def adviceForm = Form[Advice](
+    mapping(
+      "subject" -> of[String],
+      "message" -> of[String]
+    )(Advice.apply)(Advice.unapply)
+  )
+}
 
 object SecureMessageController extends SecureMessageController
 
-trait SecureMessageController extends FrontendController {
-  def inbox(utr: String) = Action.async { implicit request =>
-		Future.successful(Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr)))
-  }
-}
+final case class Advice(subject: String, message: String)
