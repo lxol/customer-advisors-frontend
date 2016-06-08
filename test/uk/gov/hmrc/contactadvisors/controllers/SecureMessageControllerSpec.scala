@@ -75,7 +75,29 @@ class SecureMessageControllerSpec extends UnitSpec with WithFakeApplication with
   }
 
   "POST /inbox/:utr" should {
-    "redirect to main form view" in {
+    "indicate a bad request when any of the form elements are empty" in {
+      val emptySubject = SecureMessageController.submit(customer_utr)(
+        FakeRequest().withFormUrlEncodedBody(
+          "message" -> "A message sent to the customer. lkasdfjas;ldfjk"
+        )
+      )
+      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
+      status(emptySubject) shouldBe BAD_REQUEST
+
+      val emptyMessage = SecureMessageController.submit(customer_utr)(
+        FakeRequest().withFormUrlEncodedBody(
+          "subject" -> "subject"
+        )
+      )
+      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
+      status(emptyMessage) shouldBe BAD_REQUEST
+
+      val emptyFormFields = SecureMessageController.submit(customer_utr)(FakeRequest())
+      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 2
+      status(emptyFormFields) shouldBe BAD_REQUEST
+    }
+
+    "redirect to the success page when the form submission is successful" in {
       val result = SecureMessageController.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "A very interesting subject 123",
@@ -84,10 +106,13 @@ class SecureMessageControllerSpec extends UnitSpec with WithFakeApplication with
       )
 
       status(result) shouldBe 303
+
       redirectLocation(result) match {
-        case Some(redirect) => redirect should endWith ("/inbox/Success_sending_message")
+        case Some(redirect) => redirect should startWith (s"/secure-message/sent/$customer_utr")
         case _ => fail("redirect location should always be present")
       }
+
     }
+
   }
 }

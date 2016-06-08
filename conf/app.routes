@@ -2,3 +2,5 @@
 
 GET        /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inbox(utr: String)
 POST       /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
+
+GET        /sent/:utr/:messageId   uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.sent(utr: String, messageId: String)

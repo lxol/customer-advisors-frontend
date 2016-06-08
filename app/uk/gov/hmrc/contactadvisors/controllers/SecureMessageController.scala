@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import java.util.UUID
+
 import play.api.data._
 import play.api.data.Forms._
-import play.api.data.format.Formats._
 import play.api.mvc._
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
@@ -33,17 +34,25 @@ trait SecureMessageController extends FrontendController {
 
   def submit(utr: String) = Action.async { implicit request =>
     adviceForm.bindFromRequest.fold(
-      formWithErrors => ???,
+      formWithErrors => Future.successful(
+        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+      ),
       advice => Future.successful(
-        Redirect(routes.SecureMessageController.inbox("Success_sending_message").url)
+        Redirect(routes.SecureMessageController.sent(utr, UUID.randomUUID().toString))
       )
+    )
+  }
+
+  def sent(utr: String, messageId: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
     )
   }
 
   def adviceForm = Form[Advice](
     mapping(
-      "subject" -> of[String],
-      "message" -> of[String]
+      "subject" -> nonEmptyText,
+      "message" -> nonEmptyText
     )(Advice.apply)(Advice.unapply)
   )
 }

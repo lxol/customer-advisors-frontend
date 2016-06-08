@@ -1,0 +1,10 @@
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Great Success", bodyClasses = None) {
+
+    <h1>Your response has been successfully sent to @utr!</h1>
+
+}
