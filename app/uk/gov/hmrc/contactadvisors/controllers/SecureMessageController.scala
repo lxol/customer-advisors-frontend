@@ -21,6 +21,7 @@ import java.util.UUID
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
+import uk.gov.hmrc.contactadvisors.domain.Advice
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
@@ -59,4 +60,4 @@ trait SecureMessageController extends FrontendController {
 
 object SecureMessageController extends SecureMessageController
 
-final case class Advice(subject: String, message: String)
+
