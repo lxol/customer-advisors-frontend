@@ -17,18 +17,43 @@
 package uk.gov.hmrc.contactadvisors.controllers
 
 import org.jsoup.Jsoup
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import play.api.http.Status
+import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.contactadvisors.dependencies.SecureMessageRenderer
+import uk.gov.hmrc.play.it.{ExternalService, MicroServiceEmbeddedServer}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import scala.collection.JavaConverters._
+import uk.gov.hmrc.utils.WithWiremock
 
-class SecureMessageControllerSpec extends UnitSpec with WithFakeApplication with ScalaFutures {
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
+
+class SecureMessageControllerSpec extends {
+  val testName: String = "SecureMessageControllerSpec"
+} with UnitSpec
+  with WithFakeApplication
+  with ScalaFutures
+  with IntegrationPatience
+  with MicroServiceEmbeddedServer
+  with WithWiremock
+  with SecureMessageRenderer {
 
   val request = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
   val customer_utr = "__asd9887523512"
+
+
+  override def beforeAll() = {
+    super.beforeAll()
+    start()
+  }
+
+  override def afterAll() = {
+    super.afterAll()
+    stop()
+  }
 
   "GET /inbox/:utr" should {
     "return 200" in {
@@ -98,21 +123,60 @@ class SecureMessageControllerSpec extends UnitSpec with WithFakeApplication with
     }
 
     "redirect to the success page when the form submission is successful" in {
-      val result = SecureMessageController.submit(customer_utr)(
-        FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "A very interesting subject 123",
-          "message" -> "A message sent to the customer. lkasdfjas;ldfjk"
-        )
-      )
+      givenSecureMessageRendererRespondsSuccessfully()
 
+      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
+    }
+
+    "redirect and indicate a duplicate message submission" in {
+      givenSecureMessageRendererRespondsWith(Status.CONFLICT)
+
+      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
+    }
+
+    "redirect and indicate an unexpected error has occurred when processing the submission" in {
+      givenSecureMessageRendererRespondsWith(Status.BAD_REQUEST)
+
+      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
+    }
+
+    "redirect and indicate that the user has not opted in for paperless communications" in {
+      pending
+
+      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/unable-to-receive-alerts"
+    }
+
+
+    "redirect and indicate an invalid message submission" in {
+      pending
+
+      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/invalid"
+    }
+
+  }
+
+  def submitCompletedForm() = SecureMessageController.submit(utr.value)(
+    FakeRequest().withFormUrlEncodedBody(
+      "subject" -> subject,
+      "message" -> adviceBody
+    )
+  )
+
+  implicit class ReturnsRedirectTo(result: Future[Result]) {
+    def returnsRedirectTo(url: String) = {
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith (s"/secure-message/sent/$customer_utr")
+        case Some(redirect) => redirect should startWith (s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 
     }
-
   }
+
+  override val dependenciesPort: Int = 9847
+
+  override protected val externalServices: Seq[ExternalService] = List.empty
+
+
 }

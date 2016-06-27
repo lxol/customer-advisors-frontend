@@ -18,6 +18,7 @@ package uk.gov.hmrc.contactadvisors.connectors.models
 
 import play.api.libs.json.{Format, Json}
 import uk.gov.hmrc.contactadvisors.domain.Advice
+import uk.gov.hmrc.domain.SaUtr
 
 final case class TaxIdBody(idType: String, id: String)
 object TaxIdBody {
@@ -26,11 +27,11 @@ object TaxIdBody {
 
 final case class AdviceCreationBody(subject: String, adviceBody: String, taxId: TaxIdBody)
 object AdviceCreationBody {
-  def from(advice: Advice, utr: String): AdviceCreationBody = {
+  def from(advice: Advice, utr: SaUtr): AdviceCreationBody = {
     AdviceCreationBody(
       subject = advice.subject,
       adviceBody = advice.message,
-      taxId = TaxIdBody("sautr", utr)
+      taxId = TaxIdBody(utr.name, utr.value)
     )
   }
 

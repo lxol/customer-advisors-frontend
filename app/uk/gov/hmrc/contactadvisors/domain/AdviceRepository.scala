@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.contactadvisors.domain
 
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 trait AdviceRepository {
 
-  def saveNew(advice: Advice, utr: String)(implicit hc: HeaderCarrier): Future[StorageResult]
+  def insert(advice: Advice, utr: SaUtr)(implicit hc: HeaderCarrier): Future[StorageResult]
 
 }
 

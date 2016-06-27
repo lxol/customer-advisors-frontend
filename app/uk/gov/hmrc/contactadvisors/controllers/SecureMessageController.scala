@@ -16,17 +16,20 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
-import java.util.UUID
-
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
-import uk.gov.hmrc.contactadvisors.domain.Advice
+import uk.gov.hmrc.contactadvisors.connectors.SecureMessageRendererConnector
+import uk.gov.hmrc.contactadvisors.domain._
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 trait SecureMessageController extends FrontendController {
+
+  def secureMessageRenderer: AdviceRepository
+
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, adviceForm))
@@ -38,13 +41,36 @@ trait SecureMessageController extends FrontendController {
       formWithErrors => Future.successful(
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
-      advice => Future.successful(
-        Redirect(routes.SecureMessageController.sent(utr, UUID.randomUUID().toString))
-      )
+      advice =>
+        secureMessageRenderer.insert(advice, SaUtr(utr)).map { handleStorageResult(utr) }
     )
   }
 
-  def sent(utr: String, messageId: String) = Action.async { implicit request =>
+  def success(utr: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+    )
+  }
+
+  def duplicate(utr: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+    )
+  }
+
+  def unexpected(utr: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+    )
+  }
+
+  def invalid(utr: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+    )
+  }
+
+  def notOptedIn(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
     )
@@ -56,8 +82,16 @@ trait SecureMessageController extends FrontendController {
       "message" -> nonEmptyText
     )(Advice.apply)(Advice.unapply)
   )
+
+  private def handleStorageResult(utr: String): StorageResult => Result = {
+    case AdviceStored => Redirect(routes.SecureMessageController.success(utr))
+    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
+    case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
+  }
 }
 
-object SecureMessageController extends SecureMessageController
+object SecureMessageController extends SecureMessageController {
+  lazy val secureMessageRenderer: SecureMessageRendererConnector = SecureMessageRendererConnector
+}
 
 

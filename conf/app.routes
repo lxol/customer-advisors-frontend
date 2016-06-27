@@ -3,4 +3,9 @@
 GET        /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inbox(utr: String)
 POST       /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
 
-GET        /sent/:utr/:messageId   uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.sent(utr: String, messageId: String)
+GET        /inbox/:utr/success                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.success(utr: String)
+GET        /inbox/:utr/duplicate                uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.duplicate(utr: String)
+
+GET        /inbox/:utr/unexpected               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpected(utr: String)
+GET        /inbox/:utr/invalid                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.invalid(utr: String)
+GET        /inbox/:utr/unable-to-receive-alerts uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notOptedIn(utr: String)

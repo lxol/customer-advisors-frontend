@@ -20,19 +20,20 @@ import play.mvc.Http.Status
 import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.connectors.models.AdviceCreationBody
 import uk.gov.hmrc.contactadvisors.domain._
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, Upstream4xxResponse}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
-abstract class SecureMessageRendererConnector extends AdviceRepository {
+trait SecureMessageRendererConnector extends AdviceRepository {
 
   def http: HttpPost
   def serviceUrl: String
 
-  override def saveNew(advice: Advice, utr: String)
-                      (implicit hc: HeaderCarrier): Future[StorageResult] =
+  override def insert(advice: Advice, utr: SaUtr)
+                     (implicit hc: HeaderCarrier): Future[StorageResult] =
     http.POST(url = s"$serviceUrl/advice", body = AdviceCreationBody.from(advice, utr)).
       map { _ => AdviceStored }.
       recover {

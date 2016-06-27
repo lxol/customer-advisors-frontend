@@ -25,9 +25,9 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.test.WithServer
 import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.domain._
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.utils.WithWiremock
@@ -48,13 +48,13 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
     "return AdviceStored saves advice successfully" in new TestCase {
       givenSecureMessageRendererRespondsWith(Status.OK)
 
-      connector.saveNew(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceStored
+      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceStored
     }
 
     "return AdviceAlreadyExists when renderer returns a conflict (409)" in new TestCase {
       givenSecureMessageRendererRespondsWith(Status.CONFLICT)
 
-      connector.saveNew(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceAlreadyExists
+      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceAlreadyExists
     }
 
     forAll(Table("statusCode", 400, 401, 404, 415, 500)) { statusCode: Int =>
@@ -63,7 +63,7 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
           val errorMsg: String = "There has been an error"
           givenSecureMessageRendererRespondsWith(statusCode, body = errorMsg)
 
-          inside(connector.saveNew(Advice(subject, adviceBody), utr).futureValue) {
+          inside(connector.insert(Advice(subject, adviceBody), utr).futureValue) {
             case UnexpectedError(msg) =>
               msg should include(statusCode.toString)
               msg should include(errorMsg)
@@ -73,12 +73,12 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
     }
   }
 
-  trait TestCase extends WithServer {
+  trait TestCase {
     val secureMessageRendererBaseUrl = s"http://localhost:$dependenciesPort"
     val createAdvicePath = "/advice"
     val subject = "This is message subject"
     val adviceBody = "<html>advice body</html>"
-    val utr = "0329u490uwesakdjf"
+    val utr = SaUtr("0329u490uwesakdjf")
 
     val connector = new SecureMessageRendererConnector {
 
@@ -99,7 +99,7 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
                   "adviceBody" -> adviceBody,
                   "taxId" -> Json.obj(
                     "idType" -> "sautr",
-                    "id" -> utr
+                    "id" -> utr.value
                   )
                 )
               ),
