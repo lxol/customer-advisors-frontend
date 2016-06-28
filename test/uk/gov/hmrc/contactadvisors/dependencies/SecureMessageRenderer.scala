@@ -18,6 +18,7 @@ package uk.gov.hmrc.contactadvisors.dependencies
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.skyscreamer.jsonassert.JSONCompareMode
+import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.SaUtr
 
@@ -28,7 +29,36 @@ trait SecureMessageRenderer {
   val utr = SaUtr("0329u490uwesakdjf")
 
   def givenSecureMessageRendererRespondsSuccessfully(): Unit = {
-    givenSecureMessageRendererRespondsWith(200)
+    givenSecureMessageRendererRespondsWith(Status.OK)
+  }
+
+  def givenSecureMessageRendererReturnsDuplicateAdvice(): Unit = {
+    givenSecureMessageRendererRespondsWith(Status.CONFLICT)
+
+  }
+
+  def givenSecureMessageRendererCannotFindTheUtr(): Unit = {
+    givenSecureMessageRendererRespondsWith(
+      status = Status.NOT_FOUND,
+      body =
+        """
+          | {
+          |     "reason": "TAX_ID_NOT_RECOGNISED"
+          | }
+        """.stripMargin
+    )
+  }
+
+  def givenSecureMessageRendererFindsThatUserIsNotPaperless(): Unit = {
+    givenSecureMessageRendererRespondsWith(
+      status = Status.PRECONDITION_FAILED,
+      body =
+        """
+          | {
+          |     "reason": "USER_NOT_PAPERLESS"
+          | }
+        """.stripMargin
+    )
   }
 
   def givenSecureMessageRendererRespondsWith(status: Int, body: String = ""): Unit = {

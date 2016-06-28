@@ -125,37 +125,37 @@ class SecureMessageControllerSpec extends {
     "redirect to the success page when the form submission is successful" in {
       givenSecureMessageRendererRespondsSuccessfully()
 
-      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
     }
 
     "redirect and indicate a duplicate message submission" in {
-      givenSecureMessageRendererRespondsWith(Status.CONFLICT)
+      givenSecureMessageRendererReturnsDuplicateAdvice()
 
-      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
     }
 
     "redirect and indicate an unexpected error has occurred when processing the submission" in {
       givenSecureMessageRendererRespondsWith(Status.BAD_REQUEST)
 
-      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
     }
 
     "redirect and indicate that the user has not opted in for paperless communications" in {
-      pending
+      givenSecureMessageRendererFindsThatUserIsNotPaperless()
 
-      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/unable-to-receive-alerts"
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
     }
 
 
-    "redirect and indicate an invalid message submission" in {
-      pending
+    "redirect and indicate a submission for unknown utr" in {
+      givenSecureMessageRendererCannotFindTheUtr()
 
-      submitCompletedForm() returnsRedirectTo s"/inbox/$utr/invalid"
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
     }
 
   }
 
-  def submitCompletedForm() = SecureMessageController.submit(utr.value)(
+  def submissionOfCompletedForm() = SecureMessageController.submit(utr.value)(
     FakeRequest().withFormUrlEncodedBody(
       "subject" -> subject,
       "message" -> adviceBody

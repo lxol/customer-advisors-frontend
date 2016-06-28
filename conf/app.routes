@@ -7,5 +7,5 @@ GET        /inbox/:utr/success                  uk.gov.hmrc.contactadvisors.cont
 GET        /inbox/:utr/duplicate                uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.duplicate(utr: String)
 
 GET        /inbox/:utr/unexpected               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpected(utr: String)
-GET        /inbox/:utr/invalid                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.invalid(utr: String)
-GET        /inbox/:utr/unable-to-receive-alerts uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notOptedIn(utr: String)
+GET        /inbox/:utr/unknown                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unknown(utr: String)
+GET        /inbox/:utr/not-paperless            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notPaperless(utr: String)

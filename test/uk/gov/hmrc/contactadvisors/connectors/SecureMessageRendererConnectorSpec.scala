@@ -26,6 +26,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.contactadvisors.WSHttp
+import uk.gov.hmrc.contactadvisors.dependencies.SecureMessageRenderer
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost}
@@ -40,25 +41,66 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
   with WithFakeApplication
   with TableDrivenPropertyChecks
   with IntegrationPatience
-  with WithWiremock {
+  with WithWiremock
+  with SecureMessageRenderer {
 
   "secure message renderer connector" should {
     implicit val hc = HeaderCarrier()
 
-    "return AdviceStored saves advice successfully" in new TestCase {
+    s"return $AdviceStored saves advice successfully" in new TestCase {
+      print(s"AdviceStored: $AdviceStored")
       givenSecureMessageRendererRespondsWith(Status.OK)
 
       connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceStored
     }
 
-    "return AdviceAlreadyExists when renderer returns a conflict (409)" in new TestCase {
-      givenSecureMessageRendererRespondsWith(Status.CONFLICT)
+    s"return $AdviceAlreadyExists when renderer returns a conflict (409)" in new TestCase {
+
+      givenSecureMessageRendererReturnsDuplicateAdvice()
 
       connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceAlreadyExists
     }
 
+    s"return $UnknownTaxId when renderer returns a not found (404) with a proper body" in
+      new TestCase {
+      givenSecureMessageRendererCannotFindTheUtr()
+
+      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe UnknownTaxId
+    }
+
+    s"return $UnexpectedError when renderer returns a not found (404) with an unexpected body" in
+      new TestCase {
+        givenSecureMessageRendererRespondsWith(Status.NOT_FOUND, "unexpected body")
+
+        inside(connector.insert(Advice(subject, adviceBody), utr).futureValue) {
+          case UnexpectedError(msg) =>
+            msg should include(Status.NOT_FOUND.toString)
+            msg should include("unexpected body")
+            msg should include(createAdvicePath)
+        }
+      }
+
+    s"return $UserIsNotPaperless when renderer returns a precondition failed (412) with a proper body" in
+      new TestCase {
+      givenSecureMessageRendererFindsThatUserIsNotPaperless()
+
+      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe UserIsNotPaperless
+    }
+
+    s"return $UnexpectedError when renderer returns a precondition failed (412) with an unexpected body" in
+      new TestCase {
+        givenSecureMessageRendererRespondsWith(Status.PRECONDITION_FAILED, body = "unexpected body")
+
+        inside(connector.insert(Advice(subject, adviceBody), utr).futureValue) {
+          case UnexpectedError(msg) =>
+            msg should include(Status.PRECONDITION_FAILED.toString)
+            msg should include("unexpected body")
+            msg should include(createAdvicePath)
+        }
+      }
+
     forAll(Table("statusCode", 400, 401, 404, 415, 500)) { statusCode: Int =>
-      s"return UnexpectedError when response has status $statusCode" in
+      s"return $UnexpectedError when response has status $statusCode" in
         new TestCase {
           val errorMsg: String = "There has been an error"
           givenSecureMessageRendererRespondsWith(statusCode, body = errorMsg)
@@ -85,28 +127,6 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
       override def http: HttpPost = WSHttp
 
       override def serviceUrl: String = secureMessageRendererBaseUrl
-
-    }
-
-    def givenSecureMessageRendererRespondsWith(status: Int, body: String = ""): Unit = {
-      givenThat(
-        post(urlEqualTo(createAdvicePath))
-          .withRequestBody(
-            equalToJson(
-              Json.stringify(
-                Json.obj(
-                  "subject" -> subject,
-                  "adviceBody" -> adviceBody,
-                  "taxId" -> Json.obj(
-                    "idType" -> "sautr",
-                    "id" -> utr.value
-                  )
-                )
-              ),
-              JSONCompareMode.LENIENT
-            )
-          )
-          .willReturn(aResponse().withStatus(status).withBody(body)))
     }
   }
 

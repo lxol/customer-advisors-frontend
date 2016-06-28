@@ -37,7 +37,14 @@ trait SecureMessageRendererConnector extends AdviceRepository {
     http.POST(url = s"$serviceUrl/advice", body = AdviceCreationBody.from(advice, utr)).
       map { _ => AdviceStored }.
       recover {
-        case Upstream4xxResponse(_, Status.CONFLICT, _, _) => AdviceAlreadyExists
+        case Upstream4xxResponse(_, Status.CONFLICT, _, _) =>  AdviceAlreadyExists
+
+        case notFound: uk.gov.hmrc.play.http.NotFoundException
+          if notFound.message.contains("TAX_ID_NOT_RECOGNISED") => UnknownTaxId
+
+        case Upstream4xxResponse(message, Status.PRECONDITION_FAILED, _, _)
+          if message.contains("USER_NOT_PAPERLESS") => UserIsNotPaperless
+
         case ex => UnexpectedError(ex.getMessage)
       }
 

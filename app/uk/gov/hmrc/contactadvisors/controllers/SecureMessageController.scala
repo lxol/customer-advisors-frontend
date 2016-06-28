@@ -64,13 +64,13 @@ trait SecureMessageController extends FrontendController {
     )
   }
 
-  def invalid(utr: String) = Action.async { implicit request =>
+  def unknown(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
     )
   }
 
-  def notOptedIn(utr: String) = Action.async { implicit request =>
+  def notPaperless(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
     )
@@ -86,6 +86,8 @@ trait SecureMessageController extends FrontendController {
   private def handleStorageResult(utr: String): StorageResult => Result = {
     case AdviceStored => Redirect(routes.SecureMessageController.success(utr))
     case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
+    case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
+    case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
     case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
   }
 }
@@ -93,5 +95,3 @@ trait SecureMessageController extends FrontendController {
 object SecureMessageController extends SecureMessageController {
   lazy val secureMessageRenderer: SecureMessageRendererConnector = SecureMessageRendererConnector
 }
-
-

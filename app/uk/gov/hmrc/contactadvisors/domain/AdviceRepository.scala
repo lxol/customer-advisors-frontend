@@ -30,4 +30,6 @@ trait AdviceRepository {
 sealed trait StorageResult extends Product with Serializable
 case object AdviceStored extends StorageResult
 case object AdviceAlreadyExists extends StorageResult
+case object UnknownTaxId extends StorageResult
+case object UserIsNotPaperless extends StorageResult
 final case class UnexpectedError(msg: String) extends StorageResult
