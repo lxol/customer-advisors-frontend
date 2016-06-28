@@ -48,31 +48,31 @@ trait SecureMessageController extends FrontendController {
 
   def success(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.success(utr))
     )
   }
 
   def duplicate(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.duplicate(utr))
     )
   }
 
   def unexpected(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.unexpected(utr))
     )
   }
 
   def unknown(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.unknown(utr))
     )
   }
 
   def notPaperless(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.sent(utr))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.not_paperless(utr))
     )
   }
 

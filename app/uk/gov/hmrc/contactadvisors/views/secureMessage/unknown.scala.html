@@ -1,0 +1,12 @@
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Unknown UTR", bodyClasses = None) {
+
+    <h1>
+        The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account).
+    </h1>
+
+}

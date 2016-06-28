@@ -1,0 +1,12 @@
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Advice creation successful", bodyClasses = None) {
+
+    <h1>
+        Thanks. We have received your reply and the customer will now be able to see the new message in the Personal Tax Account secure message Inbox for user with SA-UTR @utr.
+    </h1>
+
+}

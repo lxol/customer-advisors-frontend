@@ -40,7 +40,7 @@ class SecureMessageControllerSpec extends {
   with WithWiremock
   with SecureMessageRenderer {
 
-  val request = FakeRequest("GET", "/")
+  val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
   val customer_utr = "__asd9887523512"
 
@@ -57,24 +57,24 @@ class SecureMessageControllerSpec extends {
 
   "GET /inbox/:utr" should {
     "return 200" in {
-      val result = SecureMessageController.inbox(customer_utr)(request)
+      val result = SecureMessageController.inbox(customer_utr)(getRequest)
       status(result) shouldBe Status.OK
     }
 
     "return HTML" in {
-      val result = SecureMessageController.inbox(customer_utr)(request)
+      val result = SecureMessageController.inbox(customer_utr)(getRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
 
     "show main banner" in {
-      val result = SecureMessageController.inbox(customer_utr)(request)
+      val result = SecureMessageController.inbox(customer_utr)(getRequest)
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByTag("nav").attr("id") shouldBe "proposition-menu"
     }
 
     "have the expected elements on the form" in {
-      val result = SecureMessageController.inbox(customer_utr)(request)
+      val result = SecureMessageController.inbox(customer_utr)(getRequest)
       status(result) shouldBe 200
 
       val document = Jsoup.parse(contentAsString(result))
@@ -103,7 +103,7 @@ class SecureMessageControllerSpec extends {
     "indicate a bad request when any of the form elements are empty" in {
       val emptySubject = SecureMessageController.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
-          "message" -> "A message sent to the customer. lkasdfjas;ldfjk"
+          "message" -> "A message success to the customer. lkasdfjas;ldfjk"
         )
       )
       Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
@@ -155,6 +155,47 @@ class SecureMessageControllerSpec extends {
 
   }
 
+  "submission result form" should {
+    "contain correct message for success" in {
+      SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
+        (
+          "Advice creation successful",
+          s"Thanks. We have received your reply and the customer will now be able to see the " +
+            s"new message in the Personal Tax Account secure message Inbox for user with SA-UTR ${utr.value}."
+          )
+    }
+    "contain correct message for duplicate" in {
+      SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
+        (
+          "Advice already exists",
+          s"This message appears to be a duplicate of a message somebody sent earlier. " +
+            s"We haven't saved it for that reason."
+          )
+    }
+    "contain correct message for unknown taxid" in {
+      SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
+        (
+          "Unknown UTR",
+          s"The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account)."
+          )
+    }
+    "contain correct message for not paperless user" in {
+      SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
+        (
+          "User is not paperless",
+          s"The user with SA-UTR ${utr.value} is not registered for paperless communications " +
+            s"(and so we can't send them a secure message)."
+          )
+    }
+    "contain correct message for unexpected error" in {
+      SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
+        (
+          "Unexpected error",
+          s"There is an unexpected problem. There may be an issue with the connection. Please try again."
+          )
+    }
+  }
+
   def submissionOfCompletedForm() = SecureMessageController.submit(utr.value)(
     FakeRequest().withFormUrlEncodedBody(
       "subject" -> subject,
@@ -162,12 +203,34 @@ class SecureMessageControllerSpec extends {
     )
   )
 
+  implicit class ShouldContainPageWithMessage(result: Future[Result]) {
+    def shouldContainPageWithTitleAndMessage(titleAndMessage: Tuple2[String, String]) = {
+      status(result) shouldBe 200
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByTag("nav").attr("id") shouldBe "proposition-menu"
+
+      withClue("result page title") {
+        document.title() shouldBe titleAndMessage._1
+
+      }
+
+      withClue("result message") {
+        val creationResult = document.select("h1")
+        creationResult should have size 1
+        creationResult.get(0).text() shouldBe titleAndMessage._2
+      }
+    }
+  }
+
   implicit class ReturnsRedirectTo(result: Future[Result]) {
     def returnsRedirectTo(url: String) = {
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith (s"/secure-message$url")
+        case Some(redirect) => redirect should startWith(s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 

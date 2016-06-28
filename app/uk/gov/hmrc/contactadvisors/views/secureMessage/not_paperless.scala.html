@@ -1,0 +1,12 @@
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "User is not paperless", bodyClasses = None) {
+
+    <h1>
+        The user with SA-UTR @utr is not registered for paperless communications (and so we can't send them a secure message).
+    </h1>
+
+}

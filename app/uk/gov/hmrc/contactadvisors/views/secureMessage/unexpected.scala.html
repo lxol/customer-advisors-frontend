@@ -1,0 +1,12 @@
+@import uk.gov.hmrc.play.views.html.helpers._
+@import play.api.mvc._
+
+@(utr: String)(implicit request: Request[_])
+
+@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Unexpected error", bodyClasses = None) {
+
+    <h1>
+        There is an unexpected problem. There may be an issue with the connection. Please try again.
+    </h1>
+
+}
