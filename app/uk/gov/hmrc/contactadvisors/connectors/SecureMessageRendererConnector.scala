@@ -30,14 +30,24 @@ import scala.concurrent.Future
 trait SecureMessageRendererConnector extends AdviceRepository {
 
   def http: HttpPost
+
   def serviceUrl: String
 
   override def insert(advice: Advice, utr: SaUtr)
-                     (implicit hc: HeaderCarrier): Future[StorageResult] =
-    http.POST(url = s"$serviceUrl/advice", body = AdviceCreationBody.from(advice, utr)).
-      map { _ => AdviceStored }.
+                     (implicit hc: HeaderCarrier): Future[StorageResult] = {
+    val callUrl: String = s"$serviceUrl/advice"
+    http.POST(url = callUrl, body = AdviceCreationBody.from(advice, utr)).
+      map { response =>
+        response.status match {
+          case Status.OK => AdviceStored
+          case code => UnexpectedError(
+            s"""Unexpected status code [$code] with response body [${response.body}]
+                |received while calling $callUrl""".stripMargin
+          )
+        }
+      }.
       recover {
-        case Upstream4xxResponse(_, Status.CONFLICT, _, _) =>  AdviceAlreadyExists
+        case Upstream4xxResponse(_, Status.CONFLICT, _, _) => AdviceAlreadyExists
 
         case notFound: uk.gov.hmrc.play.http.NotFoundException
           if notFound.message.contains("TAX_ID_NOT_RECOGNISED") => UnknownTaxId
@@ -47,6 +57,7 @@ trait SecureMessageRendererConnector extends AdviceRepository {
 
         case ex => UnexpectedError(ex.getMessage)
       }
+  }
 
 }
 

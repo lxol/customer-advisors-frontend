@@ -155,7 +155,7 @@ class SecureMessageControllerSpec extends {
 
   }
 
-  "submission result form" should {
+  "submission result page" should {
     "contain correct message for success" in {
       SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
         (
@@ -230,7 +230,7 @@ class SecureMessageControllerSpec extends {
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith(s"/secure-message$url")
+        case Some(redirect) => redirect should startWith (s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 

@@ -16,15 +16,12 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.Inside._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
-import play.api.libs.json.Json
 import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.dependencies.SecureMessageRenderer
 import uk.gov.hmrc.contactadvisors.domain._
@@ -99,7 +96,7 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
         }
       }
 
-    forAll(Table("statusCode", 400, 401, 404, 415, 500)) { statusCode: Int =>
+    forAll(Table("statusCode", 202, 400, 401, 404, 415, 500)) { statusCode: Int =>
       s"return $UnexpectedError when response has status $statusCode" in
         new TestCase {
           val errorMsg: String = "There has been an error"
