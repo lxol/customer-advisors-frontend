@@ -157,42 +157,36 @@ class SecureMessageControllerSpec extends {
 
   "submission result page" should {
     "contain correct message for success" in {
-      SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
-        (
-          "Advice creation successful",
-          s"Thanks. We have received your reply and the customer will now be able to see the " +
-            s"new message in the Personal Tax Account secure message Inbox for user with SA-UTR ${utr.value}."
-          )
+      SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+        "Advice creation successful",
+        "Thanks. We have received your reply and the customer will now be able to see the " +
+          s"new message in the Personal Tax Account secure message Inbox for user with SA-UTR ${utr.value}."
+      )
     }
     "contain correct message for duplicate" in {
-      SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
-        (
-          "Advice already exists",
-          s"This message appears to be a duplicate of a message somebody sent earlier. " +
-            s"We haven't saved it for that reason."
-          )
+      SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+        "Advice already exists",
+        "This message appears to be a duplicate of a message somebody sent earlier. We haven't saved it for that reason."
+      )
     }
     "contain correct message for unknown taxid" in {
-      SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
-        (
-          "Unknown UTR",
-          s"The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account)."
-          )
+      SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+        "Unknown UTR",
+        "The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account)."
+      )
     }
     "contain correct message for not paperless user" in {
-      SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
-        (
-          "User is not paperless",
-          s"The user with SA-UTR ${utr.value} is not registered for paperless communications " +
-            s"(and so we can't send them a secure message)."
-          )
+      SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+        "User is not paperless",
+        s"The user with SA-UTR ${utr.value} is not registered for paperless communications " +
+           "(and so we can't send them a secure message)."
+      )
     }
     "contain correct message for unexpected error" in {
-      SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage
-        (
-          "Unexpected error",
-          s"There is an unexpected problem. There may be an issue with the connection. Please try again."
-          )
+      SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+        "Unexpected error",
+        "There is an unexpected problem. There may be an issue with the connection. Please try again."
+      )
     }
   }
 
@@ -204,7 +198,7 @@ class SecureMessageControllerSpec extends {
   )
 
   implicit class ShouldContainPageWithMessage(result: Future[Result]) {
-    def shouldContainPageWithTitleAndMessage(titleAndMessage: Tuple2[String, String]) = {
+    def shouldContainPageWithTitleAndMessage(title: String, message: String) = {
       status(result) shouldBe 200
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
@@ -213,14 +207,14 @@ class SecureMessageControllerSpec extends {
       document.getElementsByTag("nav").attr("id") shouldBe "proposition-menu"
 
       withClue("result page title") {
-        document.title() shouldBe titleAndMessage._1
+        document.title() shouldBe title
 
       }
 
       withClue("result message") {
         val creationResult = document.select("h1")
         creationResult should have size 1
-        creationResult.get(0).text() shouldBe titleAndMessage._2
+        creationResult.get(0).text() shouldBe message
       }
     }
   }
