@@ -17,6 +17,7 @@
 package uk.gov.hmrc.contactadvisors.controllers
 
 import org.jsoup.Jsoup
+import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import play.api.http.Status
 import play.api.mvc.Result
@@ -83,7 +84,12 @@ class SecureMessageControllerSpec extends {
 
       val adviceSubject = formElements.find(_.id() == "subject")
       withClue("advice subject field") {
-        adviceSubject.map(_.tagName()) shouldBe Some("input")
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+            element.attr("type") shouldBe "hidden"
+            element.`val`() shouldBe "Response to your enquiry from HMRC customer services"
+        }
       }
 
       val adviceMessage = formElements.find(_.id() == "message")

@@ -32,7 +32,11 @@ trait SecureMessageController extends FrontendController {
 
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, adviceForm))
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(
+        utr,
+        adviceForm.fill(Advice("Response to your enquiry from HMRC customer services", ""))
+      )
+      )
     )
   }
 
