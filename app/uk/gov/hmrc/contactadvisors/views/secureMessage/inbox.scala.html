@@ -10,21 +10,20 @@
     @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submit(utr), 'id -> "form-submit-customer-advice") {
         <fieldset>
             <div class="form-field">
-            @input(
-                adviceForm("subject"),
-                '_label -> "Subject",
-                '_divClass -> "form-field",
-                '_inputClass -> "input--medium input--cleared",
-                '_type -> "hidden",
-                'parentField -> adviceForm("advice")
-            )
-            </div>
-            <div class="form-field">
             @textArea(
                 adviceForm("message"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
                 '_label -> "Message"
+            )
+            </div>
+            <div class="form-field">
+            @input(
+                adviceForm("subject"),
+                '_divClass -> "form-field",
+                '_inputClass -> "input--medium input--cleared",
+                '_type -> "hidden",
+                'parentField -> adviceForm("advice")
             )
             </div>
         </fieldset>
