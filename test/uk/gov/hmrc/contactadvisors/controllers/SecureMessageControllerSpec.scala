@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import java.util.UUID
+
 import org.jsoup.Jsoup
 import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -43,7 +45,7 @@ class SecureMessageControllerSpec extends {
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
-  val customer_utr = "__asd9887523512"
+  val customer_utr = UUID.randomUUID.toString
 
 
   override def beforeAll() = {
