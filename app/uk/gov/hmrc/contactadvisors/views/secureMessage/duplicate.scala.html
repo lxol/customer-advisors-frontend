@@ -5,8 +5,10 @@
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Advice already exists", bodyClasses = None) {
 
-    <h1>
-        This message appears to be a duplicate of a message somebody sent earlier. We haven't saved it for that reason.
-    </h1>
-
+    <h2>Reply to customer with SA-UTR @utr</h2>
+    <div class="alert alert--failure" role="alert">
+        <p class="alert__message">
+            This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox.
+        </p>
+    </div>
 }

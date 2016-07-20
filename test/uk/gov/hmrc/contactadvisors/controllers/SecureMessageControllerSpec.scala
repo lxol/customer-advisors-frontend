@@ -166,33 +166,31 @@ class SecureMessageControllerSpec extends {
   "submission result page" should {
     "contain correct message for success" in {
       SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Advice creation successful",
-        "Thanks. We have received your reply and the customer will now be able to see the " +
-          s"new message in the Personal Tax Account secure message Inbox for user with SA-UTR ${utr.value}."
+        "Advice creation successful", utr.value,
+        "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
       )
     }
     "contain correct message for duplicate" in {
       SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Advice already exists",
-        "This message appears to be a duplicate of a message somebody sent earlier. We haven't saved it for that reason."
+        "Advice already exists", utr.value,
+        "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
       )
     }
     "contain correct message for unknown taxid" in {
       SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Unknown UTR",
-        "The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account)."
+        "Unknown UTR", utr.value,
+        "The SA-UTR provided is not recognised by the Digital Tax Platform."
       )
     }
     "contain correct message for not paperless user" in {
       SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "User is not paperless",
-        s"The user with SA-UTR ${utr.value} is not registered for paperless communications " +
-           "(and so we can't send them a secure message)."
+        "User is not paperless", utr.value,
+        s"The customer is not registered for paperless communications."
       )
     }
     "contain correct message for unexpected error" in {
       SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Unexpected error",
+        "Unexpected error", utr.value,
         "There is an unexpected problem. There may be an issue with the connection. Please try again."
       )
     }
@@ -206,7 +204,7 @@ class SecureMessageControllerSpec extends {
   )
 
   implicit class ShouldContainPageWithMessage(result: Future[Result]) {
-    def shouldContainPageWithTitleAndMessage(title: String, message: String) = {
+    def shouldContainPageWithTitleAndMessage(title: String, utr: String, message: String) = {
       status(result) shouldBe 200
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
@@ -216,11 +214,14 @@ class SecureMessageControllerSpec extends {
 
       withClue("result page title") {
         document.title() shouldBe title
+      }
 
+      withClue("result page header") {
+        document.select("h2").text().trim shouldBe s"Reply to customer with SA-UTR $utr"
       }
 
       withClue("result message") {
-        val creationResult = document.select("h1")
+        val creationResult = document.select("p.alert__message")
         creationResult should have size 1
         creationResult.get(0).text() shouldBe message
       }

@@ -5,8 +5,11 @@
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "User is not paperless", bodyClasses = None) {
 
-    <h1>
-        The user with SA-UTR @utr is not registered for paperless communications (and so we can't send them a secure message).
-    </h1>
+    <h2>Reply to customer with SA-UTR @utr</h2>
+    <div class="alert alert--failure" role="alert">
+        <p class="alert__message">
+            The customer is not registered for paperless communications.
+        </p>
+    </div>
 
 }

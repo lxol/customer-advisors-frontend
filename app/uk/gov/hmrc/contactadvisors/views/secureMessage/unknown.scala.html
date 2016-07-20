@@ -5,8 +5,11 @@
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Unknown UTR", bodyClasses = None) {
 
-    <h1>
-        The SA-UTR provided is not recognised by the MDTP (Personal Tax Account and/or Business Tax Account).
-    </h1>
+    <h2>Reply to customer with SA-UTR @utr</h2>
+    <div class="alert alert--failure" role="alert">
+        <p class="alert__message">
+            The SA-UTR provided is not recognised by the Digital Tax Platform.
+        </p>
+    </div>
 
 }
