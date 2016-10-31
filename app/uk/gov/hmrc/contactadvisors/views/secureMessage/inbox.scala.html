@@ -2,7 +2,7 @@
 @import play.api.mvc._
 
 @import uk.gov.hmrc.contactadvisors.domain.Advice
-@(utr: String, adviceForm: Form[Advice])(implicit request: Request[_])
+@(utr: String, adviceForm: Form[Advice])(implicit request: Request[_], messages: Messages)
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Contact Advisor Response Form", bodyClasses = None) {
     <h2>Please complete and submit the form below in order to reply to @utr</h2>

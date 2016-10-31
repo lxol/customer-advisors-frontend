@@ -26,6 +26,9 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
+import play.api.i18n.Messages.Implicits._
+import play.api.Play.current
+
 trait SecureMessageController extends FrontendController {
 
   def secureMessageRenderer: AdviceRepository

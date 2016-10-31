@@ -21,6 +21,7 @@ import java.util.UUID
 import org.jsoup.Jsoup
 import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatestplus.play.OneServerPerSuite
 import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.FakeRequest
@@ -33,30 +34,17 @@ import uk.gov.hmrc.utils.WithWiremock
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-class SecureMessageControllerSpec extends {
-  val testName: String = "SecureMessageControllerSpec"
-} with UnitSpec
-  with WithFakeApplication
+class SecureMessageControllerSpec
+  extends UnitSpec
+  with OneServerPerSuite
   with ScalaFutures
   with IntegrationPatience
-  with MicroServiceEmbeddedServer
   with WithWiremock
   with SecureMessageRenderer {
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
   val customer_utr = UUID.randomUUID.toString
-
-
-  override def beforeAll() = {
-    super.beforeAll()
-    start()
-  }
-
-  override def afterAll() = {
-    super.afterAll()
-    stop()
-  }
 
   "GET /inbox/:utr" should {
     "return 200" in {
@@ -73,7 +61,7 @@ class SecureMessageControllerSpec extends {
     "show main banner" in {
       val result = SecureMessageController.inbox(customer_utr)(getRequest)
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("nav").attr("id") shouldBe "proposition-menu"
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
     }
 
     "have the expected elements on the form" in {
@@ -168,31 +156,31 @@ class SecureMessageControllerSpec extends {
       SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice creation successful", utr.value,
         "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
-      )
+        )
     }
     "contain correct message for duplicate" in {
       SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice already exists", utr.value,
         "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
-      )
+        )
     }
     "contain correct message for unknown taxid" in {
       SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unknown UTR", utr.value,
         "The SA-UTR provided is not recognised by the Digital Tax Platform."
-      )
+        )
     }
     "contain correct message for not paperless user" in {
       SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "User is not paperless", utr.value,
         s"The customer is not registered for paperless communications."
-      )
+        )
     }
     "contain correct message for unexpected error" in {
       SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unexpected error", utr.value,
         "There is an unexpected problem. There may be an issue with the connection. Please try again."
-      )
+        )
     }
   }
 
@@ -210,7 +198,7 @@ class SecureMessageControllerSpec extends {
       charset(result) shouldBe Some("utf-8")
 
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("nav").attr("id") shouldBe "proposition-menu"
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
 
       withClue("result page title") {
         document.title() shouldBe title
@@ -233,7 +221,7 @@ class SecureMessageControllerSpec extends {
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith (s"/secure-message$url")
+        case Some(redirect) => redirect should startWith(s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 
@@ -241,8 +229,4 @@ class SecureMessageControllerSpec extends {
   }
 
   override val dependenciesPort: Int = 9847
-
-  override protected val externalServices: Seq[ExternalService] = List.empty
-
-
 }

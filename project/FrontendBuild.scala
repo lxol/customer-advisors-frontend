@@ -15,50 +15,29 @@ object FrontendBuild extends Build with MicroService {
 }
 
 private object AppDependencies {
-  import play.PlayImport._
+  import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val playHealthVersion = "1.1.0"    
-  private val playJsonLoggerVersion = "2.1.1"      
-  private val frontendBootstrapVersion = "6.7.0"
-  private val govukTemplateVersion = "4.0.0"
-  private val playUiVersion = "4.14.0"
-  private val playPartialsVersion = "4.5.0"
-  private val playAuthorisedFrontendVersion = "5.5.0"
-  private val playConfigVersion = "2.0.1"
-  private val hmrcTestVersion = "1.8.0"
-  
-  val compile = Seq(
+  def apply() = Seq(
+
     ws,
-    "uk.gov.hmrc" %% "frontend-bootstrap" % frontendBootstrapVersion,
-    "uk.gov.hmrc" %% "play-partials" % playPartialsVersion,
-    "uk.gov.hmrc" %% "play-authorised-frontend" % playAuthorisedFrontendVersion,
-    "uk.gov.hmrc" %% "play-config" % playConfigVersion,
-    "uk.gov.hmrc" %% "play-json-logger" % playJsonLoggerVersion,
-    "uk.gov.hmrc" %% "govuk-template" % govukTemplateVersion,
-    "uk.gov.hmrc" %% "play-health" % playHealthVersion,
-    "uk.gov.hmrc" %% "play-ui" % playUiVersion
+    "uk.gov.hmrc"                 %% "frontend-bootstrap"    % "7.4.0",
+    "uk.gov.hmrc"                 %% "play-authorised-frontend" % "6.1.0",
+    "uk.gov.hmrc"                 %% "play-health"            % "2.0.0",
+    "uk.gov.hmrc"                 %% "play-config"            % "3.0.0",
+    "uk.gov.hmrc"                 %% "logback-json-logger"    % "3.0.0",
+    "uk.gov.hmrc"                 %% "play-partials"          % "5.2.0",
+    "uk.gov.hmrc"                 %% "govuk-template"         % "5.0.0",
+    "uk.gov.hmrc"                 %% "play-ui"                % "5.1.0",
+    "org.jsoup"                   %  "jsoup"                  % "1.9.2" % "test",
+    "com.github.tomakehurst"      %  "wiremock"               % "1.58"  % "test",
+    "uk.gov.hmrc"                 %% "hmrctest"               % "2.0.0" % "test",
+    "org.scalatest"               %% "scalatest"              % "2.2.6" % "test",
+    "org.pegdown"                 %  "pegdown"                % "1.6.0" % "test",
+    "org.mockito"                 %  "mockito-core"           % "1.9.0" % "test",
+    "org.scalatestplus.play"      %% "scalatestplus-play"     % "1.5.1" % "test",
+    "com.typesafe.play"           %% "play-test"              % PlayVersion.current % "test"
   )
-
-  trait TestDependencies {
-    lazy val scope: String = "test"
-    lazy val test : Seq[ModuleID] = ???
-  }
-
-  object Test {
-    def apply() = new TestDependencies {
-      override lazy val test = Seq(
-        "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % scope,
-        "org.scalatest" %% "scalatest" % "2.2.6" % scope,
-        "org.pegdown" % "pegdown" % "1.5.0" % scope,
-        "org.jsoup" % "jsoup" % "1.7.3" % scope,
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "com.github.tomakehurst" % "wiremock" % "1.58" % scope
-      )
-    }.test
-  }
-
-  def apply() = compile ++ Test()
 }
 
 

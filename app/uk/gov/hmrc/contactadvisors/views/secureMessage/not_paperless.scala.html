@@ -1,7 +1,7 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import play.api.mvc._
 
-@(utr: String)(implicit request: Request[_])
+@(utr: String)(implicit request: Request[_], messages: Messages)
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "User is not paperless", bodyClasses = None) {
 
