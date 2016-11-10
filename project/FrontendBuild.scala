@@ -28,7 +28,7 @@ private object AppDependencies {
     "uk.gov.hmrc"                 %% "logback-json-logger"    % "3.0.0",
     "uk.gov.hmrc"                 %% "play-partials"          % "5.2.0",
     "uk.gov.hmrc"                 %% "govuk-template"         % "5.0.0",
-    "uk.gov.hmrc"                 %% "play-ui"                % "5.1.0",
+    "uk.gov.hmrc"                 %% "play-ui"                % "5.2.0",
     "org.jsoup"                   %  "jsoup"                  % "1.9.2" % "test",
     "com.github.tomakehurst"      %  "wiremock"               % "1.58"  % "test",
     "uk.gov.hmrc"                 %% "hmrctest"               % "2.0.0" % "test",
