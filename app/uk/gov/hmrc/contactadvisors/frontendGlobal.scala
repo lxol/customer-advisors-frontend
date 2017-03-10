@@ -25,13 +25,15 @@ import uk.gov.hmrc.crypto.ApplicationCrypto
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
 import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
+import uk.gov.hmrc.play.filters.frontend.SessionTimeoutFilter
 import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
-import play.api.i18n.Messages.Implicits._
-import play.api.Play.current
 
 object FrontendGlobal
   extends DefaultFrontendGlobal {
+
+  // Temporarly filtering out `SessionTimeoutFilter` from defaultFilters because of `No CSRF token found in body`
+  override def defaultFrontendFilters = super.defaultFrontendFilters.filterNot(_.isInstanceOf[SessionTimeoutFilter])
 
   override val auditConnector = FrontendAuditConnector
   override val loggingFilter = LoggingFilter
