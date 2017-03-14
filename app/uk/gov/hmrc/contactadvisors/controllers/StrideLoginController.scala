@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.{JsValue, Json, Reads}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
@@ -23,11 +25,9 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.connectors.UserDetailsConnector
 import uk.gov.hmrc.contactadvisors.connectors.models.UserDetails
+import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HttpPost
-import play.api.i18n.Messages.Implicits._
-import play.api.Play.current
-import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
@@ -84,7 +84,8 @@ object StrideLoginController extends StrideLoginController {
   override val userDetailsConnector: UserDetailsConnector = UserDetailsConnector
 
   override def authConnector: AuthConnector = new PlayAuthConnector with ServicesConfig {
-    override val serviceUrl: String = baseUrl("auth")
+
+    lazy val serviceUrl = baseUrl("auth")
 
     override def http: HttpPost = WSHttp
   }
