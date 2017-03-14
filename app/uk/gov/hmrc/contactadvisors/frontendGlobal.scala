@@ -17,9 +17,10 @@
 package uk.gov.hmrc.contactadvisors
 
 import com.typesafe.config.Config
+import controllers.routes
 import net.ceedubs.ficus.Ficus._
-import play.api.mvc.Request
-import play.api.{Application, Configuration, Play}
+import play.api.mvc.{Request, RequestHeader, Result}
+import play.api._
 import play.twirl.api.Html
 import uk.gov.hmrc.crypto.ApplicationCrypto
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
@@ -29,6 +30,9 @@ import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import play.api.mvc.Results.{Redirect, SeeOther}
+import uk.gov.hmrc.auth.core.{InsufficientEnrolments, NoActiveSession}
+
 
 object FrontendGlobal
   extends DefaultFrontendGlobal {
@@ -46,6 +50,24 @@ object FrontendGlobal
     uk.gov.hmrc.contactadvisors.views.html.error_template(pageTitle, heading, message)
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"microservice.metrics")
+
+  override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {
+    //TODO add failed authentication redirect
+    case _: NoActiveSession => toStrideLogin(s"${rh.uri}" )
+    case ex : InsufficientEnrolments => SeeOther(routes.StrideLoginController.withoutRole().url)
+    case _ => super.resolveError(rh, ex)
+  }
+
+  private def host(service: String): String = "localhost:9000"
+
+  def origin: String = "localhost"
+
+  def strideLoginUrl: String = host("stride-auth-frontend") + "/stride/sign-in"
+
+  def toStrideLogin(successUrl: String, failureUrl: Option[String] = None): Result = Redirect(strideLoginUrl, Map(
+    "successURL" -> Seq(successUrl),
+    "origin" -> Seq(origin)
+  ) ++ failureUrl.map(f => Map("failureURL" -> Seq(f))).getOrElse(Map()))
 }
 
 object ControllerConfiguration extends ControllerConfig {

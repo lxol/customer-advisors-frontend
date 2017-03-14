@@ -9,3 +9,6 @@ GET        /inbox/:utr/duplicate                uk.gov.hmrc.contactadvisors.cont
 GET        /inbox/:utr/unexpected               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpected(utr: String)
 GET        /inbox/:utr/unknown                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unknown(utr: String)
 GET        /inbox/:utr/not-paperless            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notPaperless(utr: String)
+
+GET        /foo/test                                uk.gov.hmrc.contactadvisors.controllers.StrideLoginController.withRole()
+GET        /foo/test2                                uk.gov.hmrc.contactadvisors.controllers.StrideLoginController.withoutRole()
