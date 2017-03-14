@@ -21,7 +21,7 @@ private object AppDependencies {
   def apply() = Seq(
 
     ws,
-    "uk.gov.hmrc"                 %% "frontend-bootstrap"       % "7.15.0",
+    "uk.gov.hmrc"                 %% "frontend-bootstrap"       % "7.16.0",
     "uk.gov.hmrc"                 %% "play-authorised-frontend" % "6.3.0",
     "uk.gov.hmrc"                 %% "play-health"              % "2.1.0",
     "uk.gov.hmrc"                 %% "play-config"              % "4.3.0",
