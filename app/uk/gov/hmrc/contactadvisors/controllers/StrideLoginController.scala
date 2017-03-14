@@ -27,6 +27,7 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HttpPost
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
@@ -78,9 +79,11 @@ trait StrideLoginController extends FrontendController with AuthorisedFunctions 
 
 
 object StrideLoginController extends StrideLoginController {
+
+
   override val userDetailsConnector: UserDetailsConnector = UserDetailsConnector
 
-  override def authConnector: AuthConnector = new PlayAuthConnector {
+  override def authConnector: AuthConnector = new PlayAuthConnector with ServicesConfig {
     override val serviceUrl: String = baseUrl("auth")
 
     override def http: HttpPost = WSHttp
