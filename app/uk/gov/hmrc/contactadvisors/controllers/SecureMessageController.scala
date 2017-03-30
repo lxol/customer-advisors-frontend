@@ -25,13 +25,14 @@ import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
-
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import uk.gov.hmrc.contactadvisors.service.HtmlCleaner
 
 trait SecureMessageController extends FrontendController {
 
   def secureMessageRenderer: AdviceRepository
+  def htmlCleaner: HtmlCleaner
 
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
@@ -49,7 +50,7 @@ trait SecureMessageController extends FrontendController {
       formWithErrors => Future.successful(
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
-      advice => secureMessageRenderer.insert(advice, SaUtr(utr)).map { handleStorageResult(utr) }
+      advice => secureMessageRenderer.insert(cleanAdvice(advice), SaUtr(utr)).map { handleStorageResult(utr) }
     )
   }
 
@@ -97,8 +98,13 @@ trait SecureMessageController extends FrontendController {
     case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
     case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
   }
+
+  private def cleanAdvice(dirtyAdvice: Advice): Advice = {
+    return Advice(htmlCleaner.cleanHtml(dirtyAdvice.subject), htmlCleaner.cleanHtml(dirtyAdvice.message))
+  }
 }
 
 object SecureMessageController extends SecureMessageController {
   lazy val secureMessageRenderer: SecureMessageRendererConnector = SecureMessageRendererConnector
+  lazy val htmlCleaner: HtmlCleaner = HtmlCleaner
 }

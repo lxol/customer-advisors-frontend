@@ -116,7 +116,7 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
     val secureMessageRendererBaseUrl = s"http://localhost:$dependenciesPort"
     val createAdvicePath = "/advice"
     val subject = "This is message subject"
-    val adviceBody = "<html>advice body</html>"
+    val adviceBody = "<p>advice body</p>"
     val utr = SaUtr("0329u490uwesakdjf")
 
     val connector = new SecureMessageRendererConnector {
