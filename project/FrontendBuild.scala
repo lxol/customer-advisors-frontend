@@ -29,7 +29,7 @@ private object AppDependencies {
     "uk.gov.hmrc"                 %% "play-partials"            % "5.3.0",
     "uk.gov.hmrc"                 %% "govuk-template"           % "5.2.0",
     "uk.gov.hmrc"                 %% "play-ui"                  % "7.1.1",
-    "org.jsoup"                   %  "jsoup"                    % "1.9.2" % "test",
+    "org.jsoup"                   %  "jsoup"                    % "1.10.2",
     "com.github.tomakehurst"      %  "wiremock"                 % "1.58"  % "test",
     "uk.gov.hmrc"                 %% "hmrctest"                 % "2.2.0" % "test",
     "org.scalatest"               %% "scalatest"                % "2.2.6" % "test",

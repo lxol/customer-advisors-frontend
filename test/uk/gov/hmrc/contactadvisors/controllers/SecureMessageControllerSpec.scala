@@ -118,6 +118,19 @@ class SecureMessageControllerSpec
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
 
+    "remove script tag from message and subject" in {
+      givenSecureMessageRendererRespondsSuccessfully()
+
+      val xssMessage = SecureMessageController.submit(utr.value)(
+        FakeRequest().withFormUrlEncodedBody(
+          "subject" -> "This is message subject<script>alert('hax')</script>",
+          "message" -> "<p>advice body</p><script>alert('more hax')</script>"
+        )
+      )
+
+      xssMessage returnsRedirectTo s"/inbox/$utr/success"
+    }
+
     "redirect to the success page when the form submission is successful" in {
       givenSecureMessageRendererRespondsSuccessfully()
 

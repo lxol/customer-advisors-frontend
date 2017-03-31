@@ -25,7 +25,7 @@ import uk.gov.hmrc.domain.SaUtr
 trait SecureMessageRenderer {
   val createAdvicePath = "/advice"
   val subject = "This is message subject"
-  val adviceBody = "<html>advice body</html>"
+  val adviceBody = "<p>advice body</p>"
   val utr = SaUtr("0329u490uwesakdjf")
 
   def givenSecureMessageRendererRespondsSuccessfully(): Unit = {
