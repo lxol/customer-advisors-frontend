@@ -24,8 +24,17 @@ import org.jsoup.safety.Whitelist
 trait HtmlCleaner {
   def cleanHtml(dirtyHtml: String): String = {
     val settings = new OutputSettings().prettyPrint(false)
-    return Jsoup.clean(dirtyHtml, "", Whitelist.relaxed(), settings)
+    return Jsoup.clean(dirtyHtml, "", relaxedWhitelistWithClassAttributes(), settings)
   }
+
+  private def relaxedWhitelistWithClassAttributes(): Whitelist = Whitelist.relaxed()
+    .addAttributes("a", "class")
+    .addAttributes("div", "class")
+    .addAttributes("ol", "class")
+    .addAttributes("table", "class")
+    .addAttributes("td", "class")
+    .addAttributes("th", "class")
+    .addAttributes("ul", "class")
 }
 
 object HtmlCleaner extends HtmlCleaner
