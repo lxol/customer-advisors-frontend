@@ -27,14 +27,20 @@ trait HtmlCleaner {
     return Jsoup.clean(dirtyHtml, "", relaxedWhitelistWithClassAttributes(), settings)
   }
 
-  private def relaxedWhitelistWithClassAttributes(): Whitelist = Whitelist.relaxed()
-    .addAttributes("a", "class")
-    .addAttributes("div", "class")
-    .addAttributes("ol", "class")
-    .addAttributes("table", "class")
-    .addAttributes("td", "class")
-    .addAttributes("th", "class")
-    .addAttributes("ul", "class")
+  private def relaxedWhitelistWithClassAttributes(): Whitelist = {
+    // We want to allow "class" for all allowed tags.  Unfortunately there is no way to do
+    // getTags() on a Whitelist, so I have copied the list of tags from the Whitelist.relaxed()
+    // implementation here.  Obviously this is not ideal, but there isn't a way around it.
+    val allTags = List("a", "b", "blockquote", "br", "caption", "cite", "code", "col",
+      "colgroup", "dd", "div", "dl", "dt", "em", "h1", "h2", "h3", "h4", "h5", "h6",
+      "i", "img", "li", "ol", "p", "pre", "q", "small", "span", "strike", "strong",
+      "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u",
+      "ul")
+
+    allTags.foldLeft(Whitelist.relaxed()) {
+      (whitelist, tag) => whitelist.addAttributes(tag, "class")
+    }
+  }
 }
 
 object HtmlCleaner extends HtmlCleaner
