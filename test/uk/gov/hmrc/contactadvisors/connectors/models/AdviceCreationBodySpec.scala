@@ -61,3 +61,34 @@ class AdviceCreationBodySpec extends UnitSpec {
     }
   }
 }
+
+
+//{
+//  "recipient": {
+//    "taxIdentifier": {
+//      "name": "sautr",
+//      "value": "1234567890"
+//    },
+//    "name": {
+//      "title": "Mr",
+//      "forename": "William",
+//      "secondForename": "Harry",
+//      "surname": "Smith",
+//      "honours": "OBE"
+//    }
+//  },
+//  "externalRef": {
+//    "id": "123412342314",
+//    "source": "gmc"
+//  },
+//  "messageType": "mailout-batch",
+//  "subject": "Reminder to file a Self Assessment return",
+//  "content": "Some base64-encoded HTML",
+//  "validFrom": "2017-02-14",
+//  "details": {
+//    "formId": "SA300",
+//    "statutory": true,
+//    "paperSent": false,
+//    "batchId": "1234567"
+//  }
+//}

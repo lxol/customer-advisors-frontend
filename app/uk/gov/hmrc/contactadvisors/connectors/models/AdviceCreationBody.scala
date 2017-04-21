@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.contactadvisors.connectors.models
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json._
 import uk.gov.hmrc.contactadvisors.domain.Advice
 import uk.gov.hmrc.domain.SaUtr
 
@@ -37,3 +37,4 @@ object AdviceCreationBody {
 
   implicit val formats = Json.format[AdviceCreationBody]
 }
+
