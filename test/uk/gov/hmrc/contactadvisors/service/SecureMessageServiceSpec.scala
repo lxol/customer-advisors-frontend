@@ -8,7 +8,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import uk.gov.hmrc.contactadvisors.connectors.models.{SecureMessage, TaxpayerName}
 import uk.gov.hmrc.contactadvisors.connectors.{MessageConnector, TaxpayerNameConnector}
-import uk.gov.hmrc.contactadvisors.domain.{Advice, AdviceStored}
+import uk.gov.hmrc.contactadvisors.domain.{Advice, AdviceAlreadyExists, AdviceStored}
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -46,6 +46,16 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
       val storedMessage = messageCaptor.getValue
       storedMessage.recipient.name shouldBe emptyTaxpayerName
       storedMessage.content shouldBe encodedAdviceBody
+    }
+
+    "get taxpayer name details, and handle failure in creating the message" in new TestCase {
+
+      when(taxpayerNameConnectorMock.taxpayerName(validSaUtr)).thenReturn(Future.successful(Some(validTaxpayerName)))
+      when(messageConnectorMock.create(messageCaptor.capture())(any())).thenReturn(Future.successful(AdviceAlreadyExists))
+
+      val storageResult = secureMessageService.createMessageWithTaxpayerName(advice, validSaUtr).futureValue
+
+      storageResult shouldBe AdviceAlreadyExists
     }
 
   }
