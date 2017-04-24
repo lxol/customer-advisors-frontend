@@ -132,6 +132,7 @@ class SecureMessageControllerSpec
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
       val secureMessage = SecureMessageCreator.message.copy(
+        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
         subject = "This is message subject",
         content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
         validFrom = DateTimeUtils.now.toLocalDate,

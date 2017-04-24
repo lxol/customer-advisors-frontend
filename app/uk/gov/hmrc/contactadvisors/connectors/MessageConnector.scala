@@ -40,7 +40,7 @@ trait MessageConnector {
 
     val createMessageAPIurl: String = s"$serviceUrl/messages"
 
-    http.POST(url = createMessageAPIurl, body = Json.toJson(secureMessage).toString).
+    http.POST(url = createMessageAPIurl, body = secureMessage).
       flatMap { response =>
         response.status match {
           case Status.CREATED => Future.fromTry(Try {
