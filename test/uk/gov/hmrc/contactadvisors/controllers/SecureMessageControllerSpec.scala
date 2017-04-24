@@ -18,7 +18,6 @@ package uk.gov.hmrc.contactadvisors.controllers
 
 import java.util.UUID
 
-import com.github.tomakehurst.wiremock.client.WireMock
 import org.apache.commons.codec.binary.Base64
 import org.jsoup.Jsoup
 import org.scalatest.Inside
@@ -28,7 +27,7 @@ import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.contactadvisors.connectors.models.{Details, TaxpayerName}
+import uk.gov.hmrc.contactadvisors.connectors.models.TaxpayerName
 import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub, TaxpayerNameStub}
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.test.UnitSpec
@@ -150,36 +149,62 @@ class SecureMessageControllerSpec
       xssMessage returnsRedirectTo s"/inbox/$utr/success"
     }
 
-//    "redirect to the success page when the form submission is successful" in {
-//      givenSecureMessageRendererRespondsSuccessfully()
-//
-//      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
-//    }
-//
-//    "redirect and indicate a duplicate message submission" in {
-//      givenSecureMessageRendererReturnsDuplicateAdvice()
-//
-//      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
-//    }
-//
-//    "redirect and indicate an unexpected error has occurred when processing the submission" in {
-//      givenSecureMessageRendererRespondsWith(Status.BAD_REQUEST)
-//
-//      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
-//    }
-//
-//    "redirect and indicate that the user has not opted in for paperless communications" in {
-//      givenSecureMessageRendererFindsThatUserIsNotPaperless()
-//
-//      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
-//    }
-//
-//
-//    "redirect and indicate a submission for unknown utr" in {
-//      givenSecureMessageRendererCannotFindTheUtr()
-//
-//      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
-//    }
+    "redirect to the success page when the form submission is successful" in {
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
+      val secureMessage = SecureMessageCreator.message.copy(
+        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
+        subject = "This is message subject",
+        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
+        validFrom = DateTimeUtils.now.toLocalDate,
+        details = SecureMessageCreator.message.details.copy(statutory = false)
+      )
+      givenMessageRespondsWith(secureMessage, successfulResponse)
+
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
+    }
+
+    "redirect and indicate a duplicate message submission" in {
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
+      val secureMessage = SecureMessageCreator.message.copy(
+        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
+        subject = "This is message subject",
+        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
+        validFrom = DateTimeUtils.now.toLocalDate,
+        details = SecureMessageCreator.message.details.copy(statutory = false)
+      )
+      givenMessageRespondsWith(secureMessage, duplicatedMessage)
+
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
+    }
+
+    "redirect and indicate an unexpected error has occurred when processing the submission" in {
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
+      val secureMessage = SecureMessageCreator.message.copy(
+        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
+        subject = "This is message subject",
+        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
+        validFrom = DateTimeUtils.now.toLocalDate,
+        details = SecureMessageCreator.message.details.copy(statutory = false)
+      )
+      givenMessageRespondsWith(secureMessage, unknownTaxId)
+
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
+    }
+
+    "redirect and indicate that the user has not opted in for paperless communications" in {
+      givenEntityResolverReturnsANonPaperlessUser(utr.value)
+
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
+    }
+
+    "redirect and indicate a submission for unknown utr" in {
+      givenEntityResolverReturnsNotFound(utr.value)
+
+      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
+    }
 
   }
 
