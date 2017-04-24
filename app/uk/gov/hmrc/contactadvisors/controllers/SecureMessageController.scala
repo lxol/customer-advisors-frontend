@@ -27,10 +27,11 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.Future
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
-import uk.gov.hmrc.contactadvisors.service.HtmlCleaner
+import uk.gov.hmrc.contactadvisors.service.{HtmlCleaner, SecureMessageService}
 
 trait SecureMessageController extends FrontendController {
 
+  val secureMessageService: SecureMessageService = ???
   def secureMessageRenderer: AdviceRepository
   def htmlCleaner: HtmlCleaner
 

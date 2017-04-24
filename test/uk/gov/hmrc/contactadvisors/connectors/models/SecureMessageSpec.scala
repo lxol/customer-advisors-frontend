@@ -32,7 +32,7 @@ class SecureMessageSpec extends UnitSpec {
       val subject = "This is a response to your HMRC request"
       val content = "This is the content of the secure message"
       val validFrom = DateTime.parse("2017-04-21").toLocalDate
-      val details = Details(formId = "CA001", statutory = true, paperSent = false, batchId = "0001")
+      val details = Details(formId = "CA001", statutory = true, paperSent = false, batchId = None)
       val message = SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
 
       val expectedJson =
@@ -60,8 +60,7 @@ class SecureMessageSpec extends UnitSpec {
            |  "details": {
            |    "formId": "CA001",
            |    "statutory": true,
-           |    "paperSent": false,
-           |    "batchId": "0001"
+           |    "paperSent": false
            |  }
            |}
          """.stripMargin

@@ -21,7 +21,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import uk.gov.hmrc.domain.SaUtr
 
-final case class Details(formId: String, statutory: Boolean, paperSent: Boolean, batchId: String)
+final case class Details(formId: String, statutory: Boolean, paperSent: Boolean, batchId: Option[String])
 object Details {
   implicit val formats = Json.format[Details]
 }
