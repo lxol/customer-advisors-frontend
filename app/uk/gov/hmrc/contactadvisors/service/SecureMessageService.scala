@@ -18,6 +18,7 @@ package uk.gov.hmrc.contactadvisors.service
 
 import java.util.UUID
 
+import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import uk.gov.hmrc.contactadvisors.connectors.models._
 import uk.gov.hmrc.contactadvisors.connectors.{MessageConnector, TaxpayerNameConnector}
@@ -43,7 +44,7 @@ trait SecureMessageService {
     val externalReference = ExternalReference(UUID.randomUUID().toString, "customer-advisor")
     val messageType = "advisor-reply"
     val subject = advice.subject
-    val content = advice.message
+    val content = new String(Base64.encodeBase64(advice.message.getBytes("UTF-8")))
     val validFrom = DateTime.now().toLocalDate
     val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
     SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
