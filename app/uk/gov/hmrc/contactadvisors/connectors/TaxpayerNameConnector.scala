@@ -45,7 +45,6 @@ trait TaxpayerNameConnector {
 
     implicit val nameFormat = NameFromHods.format
 
-
     http.GET[NameFromHods](url(s"/self-assessment/individual/$utr/designatory-details/taxpayer"))
       .map(_.name)
       .recover {
@@ -55,7 +54,6 @@ trait TaxpayerNameConnector {
       case e =>
         Logger.error(s"Unable to get taxpayer name for $utr", e)
         None
-
     }
   }
 }

@@ -28,7 +28,7 @@ trait AdviceRepository {
 }
 
 sealed trait StorageResult extends Product with Serializable
-case object AdviceStored extends StorageResult
+case class AdviceStored(messageId: String) extends StorageResult
 case object AdviceAlreadyExists extends StorageResult
 case object UnknownTaxId extends StorageResult
 case object UserIsNotPaperless extends StorageResult

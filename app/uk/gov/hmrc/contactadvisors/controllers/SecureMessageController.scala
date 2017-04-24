@@ -31,8 +31,8 @@ import uk.gov.hmrc.contactadvisors.service.{HtmlCleaner, SecureMessageService}
 
 trait SecureMessageController extends FrontendController {
 
-  val secureMessageService: SecureMessageService = ???
-  def secureMessageRenderer: AdviceRepository
+  val secureMessageService: SecureMessageService
+
   def htmlCleaner: HtmlCleaner
 
   def inbox(utr: String) = Action.async { implicit request =>
@@ -51,7 +51,7 @@ trait SecureMessageController extends FrontendController {
       formWithErrors => Future.successful(
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
-      advice => secureMessageRenderer.insert(cleanAdvice(advice), SaUtr(utr)).map { handleStorageResult(utr) }
+      advice => secureMessageService.createMessageWithTaxpayerName(cleanAdvice(advice), SaUtr(utr)).map { handleStorageResult(utr) }
     )
   }
 
@@ -93,7 +93,7 @@ trait SecureMessageController extends FrontendController {
   )
 
   private def handleStorageResult(utr: String): StorageResult => Result = {
-    case AdviceStored => Redirect(routes.SecureMessageController.success(utr))
+    case AdviceStored(_) => Redirect(routes.SecureMessageController.success(utr))
     case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
     case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
     case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
@@ -106,6 +106,6 @@ trait SecureMessageController extends FrontendController {
 }
 
 object SecureMessageController extends SecureMessageController {
-  lazy val secureMessageRenderer: SecureMessageRendererConnector = SecureMessageRendererConnector
+  lazy val secureMessageService: SecureMessageService = SecureMessageService
   lazy val htmlCleaner: HtmlCleaner = HtmlCleaner
 }

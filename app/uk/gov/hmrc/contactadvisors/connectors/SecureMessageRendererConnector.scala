@@ -39,7 +39,7 @@ trait SecureMessageRendererConnector extends AdviceRepository {
     http.POST(url = callUrl, body = AdviceCreationBody.from(advice, utr)).
       map { response =>
         response.status match {
-          case Status.OK => AdviceStored
+          case Status.OK => AdviceStored("")
           case code => UnexpectedError(
             s"""Unexpected status code [$code] with response body [${response.body}]
                 |received while calling $callUrl""".stripMargin

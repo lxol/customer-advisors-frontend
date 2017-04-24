@@ -21,11 +21,11 @@ import play.mvc.Http.Status
 import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
 import uk.gov.hmrc.contactadvisors.domain._
-import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, Upstream4xxResponse}
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait MessageConnector {
 
@@ -35,36 +35,29 @@ trait MessageConnector {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-   def create(secureMessage: SecureMessage)
-                     (implicit hc: HeaderCarrier): Future[StorageResult] = {
+  def create(secureMessage: SecureMessage)
+            (implicit hc: HeaderCarrier): Future[StorageResult] = {
+
     val createMessageAPIurl: String = s"$serviceUrl/messages"
+
     http.POST(url = createMessageAPIurl, body = Json.toJson(secureMessage).toString).
-      map { response =>
+      flatMap { response =>
         response.status match {
-          case Status.OK => AdviceStored
-          case code => UnexpectedError(
-            s"""Unexpected status code [$code] with response body [${response.body}]
-               |received while calling $createMessageAPIurl""".stripMargin
-          )
+          case Status.CREATED => Future.fromTry(Try {
+            (response.json \ "id").as[String]
+          }).map(messageId => AdviceStored(messageId)).
+            recoverWith { case x => Future.successful(UnexpectedError(s"Missing id in: ${response.body}}")) }
+          case status => Future.successful(UnexpectedError(s"Unexpected status : $status from $createMessageAPIurl"))
         }
       }.
-      recover {
-        case Upstream4xxResponse(_, Status.CONFLICT, _, _) => AdviceAlreadyExists
-
-        case notFound: uk.gov.hmrc.play.http.NotFoundException
-          if notFound.message.contains("TAX_ID_NOT_RECOGNISED") => UnknownTaxId
-
-        case Upstream4xxResponse(message, Status.PRECONDITION_FAILED, _, _)
-          if message.contains("USER_NOT_PAPERLESS") => UserIsNotPaperless
-
-        case ex => UnexpectedError(ex.getMessage)
+      recoverWith {
+        case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => Future.successful(AdviceAlreadyExists)
+        case ex => Future.successful(UnexpectedError(ex.getMessage))
       }
   }
-
 }
 
 object MessageConnector extends MessageConnector with ServicesConfig {
   override def http: HttpPost = WSHttp
-
   override def serviceUrl: String = baseUrl("message")
 }
