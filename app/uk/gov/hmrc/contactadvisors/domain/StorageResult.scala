@@ -16,17 +16,6 @@
 
 package uk.gov.hmrc.contactadvisors.domain
 
-import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.play.http.HeaderCarrier
-
-import scala.concurrent.Future
-
-trait AdviceRepository {
-
-  def insert(advice: Advice, utr: SaUtr)(implicit hc: HeaderCarrier): Future[StorageResult]
-
-}
-
 sealed trait StorageResult extends Product with Serializable
 case class AdviceStored(messageId: String) extends StorageResult
 case object AdviceAlreadyExists extends StorageResult
