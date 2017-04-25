@@ -18,7 +18,6 @@ package uk.gov.hmrc.contactadvisors.controllers
 
 import java.util.UUID
 
-import org.apache.commons.codec.binary.Base64
 import org.jsoup.Jsoup
 import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -27,11 +26,9 @@ import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.contactadvisors.connectors.models.TaxpayerName
 import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub, TaxpayerNameStub}
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.time.DateTimeUtils
 import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
 
 import scala.collection.JavaConverters._
@@ -52,8 +49,8 @@ class SecureMessageControllerSpec
   val customer_utr = UUID.randomUUID.toString
 
   val utr = SaUtr("123456789")
-  val subject = "This is message subject"
-  val adviceBody = "<p>advice body</p>"
+  val subject = "This is a response to your HMRC request"
+  val adviceBody = "<p>This is the content of the secure message</p>"
 
   "GET /inbox/:utr" should {
     "return 200" in {
@@ -129,20 +126,13 @@ class SecureMessageControllerSpec
 
     "remove script tag from message and subject" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
-      val secureMessage = SecureMessageCreator.message.copy(
-        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
-        subject = "This is message subject",
-        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
-        validFrom = DateTimeUtils.now.toLocalDate,
-        details = SecureMessageCreator.message.details.copy(statutory = false)
-      )
-      givenMessageRespondsWith(secureMessage, successfulResponse)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       val xssMessage = SecureMessageController.submit(utr.value)(
         FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "This is message subject<script>alert('hax')</script>",
-          "message" -> "<p>advice body</p><script>alert('more hax')</script>"
+          "subject" -> "This is a response to your HMRC request<script>alert('hax')</script>",
+          "message" -> "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
         )
       )
 
@@ -151,45 +141,24 @@ class SecureMessageControllerSpec
 
     "redirect to the success page when the form submission is successful" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
-      val secureMessage = SecureMessageCreator.message.copy(
-        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
-        subject = "This is message subject",
-        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
-        validFrom = DateTimeUtils.now.toLocalDate,
-        details = SecureMessageCreator.message.details.copy(statutory = false)
-      )
-      givenMessageRespondsWith(secureMessage, successfulResponse)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
     }
 
     "redirect and indicate a duplicate message submission" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
-      val secureMessage = SecureMessageCreator.message.copy(
-        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
-        subject = "This is message subject",
-        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
-        validFrom = DateTimeUtils.now.toLocalDate,
-        details = SecureMessageCreator.message.details.copy(statutory = false)
-      )
-      givenMessageRespondsWith(secureMessage, duplicatedMessage)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
     }
 
     "redirect and indicate an unexpected error has occurred when processing the submission" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
-      val secureMessage = SecureMessageCreator.message.copy(
-        recipient = SecureMessageCreator.message.recipient.copy(taxIdentifier = utr),
-        subject = "This is message subject",
-        content = new String(Base64.encodeBase64("<p>advice body</p>".getBytes("UTF-8"))),
-        validFrom = DateTimeUtils.now.toLocalDate,
-        details = SecureMessageCreator.message.details.copy(statutory = false)
-      )
-      givenMessageRespondsWith(secureMessage, unknownTaxId)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
     }

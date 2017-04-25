@@ -48,7 +48,7 @@ class SecureMessageRendererConnectorSpec extends UnitSpec
       print(s"AdviceStored: $AdviceStored")
       givenSecureMessageRendererRespondsWith(Status.OK)
 
-      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceStored
+      connector.insert(Advice(subject, adviceBody), utr).futureValue shouldBe AdviceStored("")
     }
 
     s"return $AdviceAlreadyExists when renderer returns a conflict (409)" in new TestCase {

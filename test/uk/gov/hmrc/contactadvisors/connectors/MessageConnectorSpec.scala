@@ -30,6 +30,8 @@
 //import play.api.http.Status
 //import play.api.libs.json.Json
 //import play.test.WithServer
+//import uk.gov.hmrc.contactadvisors.WSHttp
+//import uk.gov.hmrc.contactadvisors.domain.{MessageAlreadyExists, UnexpectedFailure}
 //import uk.gov.hmrc.domain.SaUtr
 //import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPost}
 //import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -72,9 +74,9 @@
 //      val validId = BSONObjectID.generate
 //      givenThat(post(urlEqualTo(expectedPath)).
 //        withRequestBody(equalToJson(expectedRequestBody))
-//        willReturn(aResponse().
-//          withStatus(Status.OK).
-//          withBody(responseJson(validId.stringify))))
+//        willReturn (aResponse().
+//        withStatus(Status.OK).
+//        withBody(responseJson(validId.stringify))))
 //
 //      connector.save(user, customerAdvice).futureValue shouldBe validId.stringify
 //    }
@@ -84,14 +86,18 @@
 //        willReturn(aResponse().
 //          withStatus(Status.OK)))
 //
-//      intercept[UnexpectedFailure] { await(connector.save(user, customerAdvice)) }
+//      intercept[UnexpectedFailure] {
+//        await(connector.save(user, customerAdvice))
+//      }
 //    }
 //
 //    "return MessageAlreadyExists failure with true when the message service returns 409 (conflict) while saving" in
 //      new TestCase {
 //        stubFor(post(urlEqualTo(expectedPath)).willReturn(aResponse().withStatus(Status.CONFLICT)))
 //
-//        intercept[MessageAlreadyExists] { await(connector.save(user, customerAdvice)) }
+//        intercept[MessageAlreadyExists] {
+//          await(connector.save(user, customerAdvice))
+//        }
 //      }
 //
 //    forAll(Table("statusCode", 400, 401, 404, 415, 500)) { statusCode: Int =>
@@ -105,9 +111,9 @@
 //
 //        inside(connector.save(user, customerAdvice).failed.futureValue) {
 //          case UnexpectedFailure(reason) =>
-//            reason.toString should include (expectedPath)
-//            reason.toString should include (statusCode.toString)
-//            reason.toString should include ("'{\"reason\":\"something went wrong\"}'")
+//            reason.toString should include(expectedPath)
+//            reason.toString should include(statusCode.toString)
+//            reason.toString should include("'{\"reason\":\"something went wrong\"}'")
 //        }
 //      }
 //    }
@@ -120,8 +126,8 @@
 //
 //      inside(connector.save(user, customerAdvice).failed.futureValue) {
 //        case UnexpectedFailure(reason) =>
-//          reason.toString should include (expectedPath)
-//          reason.toString should include (statusCode.toString)
+//          reason.toString should include(expectedPath)
+//          reason.toString should include(statusCode.toString)
 //      }
 //    }
 //
@@ -158,61 +164,52 @@
 //    val connector = new MessageConnector {
 //
 //      lazy val http: HttpPost = WSHttp
-//
 //      override def serviceUrl: String = messageServiceBaseUrl
-//
-//      override def taxpayerNameConnector: TaxpayerNameConnector = new TaxpayerNameConnector{
-//        override def http: HttpGet = ???
-//        override def baseUrl: String = ???
-//        override def taxpayerName(utr: SaUtr)(implicit hc: HeaderCarrier): Future[Option[TaxpayerName]] = {
-//          utr shouldBe SaUtr(taxId)
-//          Future.successful(Some(fullTaxpayerName))
-//        }
-//      }
 //    }
+//  }
 //
-//    def responseJson(id: String) = {
-//      s"""
-//        |{
-//        | "id" : "$id"
-//        |}
-//      """.stripMargin
-//    }
-//
-//    val today = LocalDate.now
-//
-//    val expectedRequestBody =
-//      s"""
-//        |{
-//        |  "recipient" : {
-//        |    "identifier" : {
-//        |      "sautr" : "some-id"
-//        |    },
-//        |    "regime" : "sa"
-//        |  },
-//        |  "subject" : "Response to your enquiry from HMRC customer services",
-//        |  "hash" : "u4StcHUQwXpLb2d+ohqEezLbgyWzencGAY2975kPEgo=",
-//        |  "renderUrl" : {
-//        |    "url" : "/message/id",
-//        |    "service" : "secure-message-renderer"
-//        |  },
-//        |  "body" : { },
-//        |  "alertDetails" : {
-//        |    "templateId" : "newMessageAlert",
-//        |    "data" : { },
-//        |    "alertFrom" : "$today",
-//        |    "recipientName" : {
-//        |      "title" : "Mr",
-//        |      "forename" : "Erbert",
-//        |      "secondForename" : "Donaldson",
-//        |      "surname" : "Ducking",
-//        |      "honours" : "KCBE"
-//        |    }
-//        |  },
-//        |  "statutory" : false,
-//        |  "validFrom" : "$today"
-//        |}
+//  def responseJson(id: String) = {
+//    s"""
+//       |{
+//       | "id" : "$id"
+//       |}
 //      """.stripMargin
 //  }
+//
+//  val today = LocalDate.now
+//
+//  val expectedRequestBody =
+//    s"""
+//       |{
+//       |  "recipient" : {
+//       |    "identifier" : {
+//       |      "sautr" : "some-id"
+//       |    },
+//       |    "regime" : "sa"
+//       |  },
+//       |  "subject" : "Response to your enquiry from HMRC customer services",
+//       |  "hash" : "u4StcHUQwXpLb2d+ohqEezLbgyWzencGAY2975kPEgo=",
+//       |  "renderUrl" : {
+//       |    "url" : "/message/id",
+//       |    "service" : "secure-message-renderer"
+//       |  },
+//       |  "body" : { },
+//       |  "alertDetails" : {
+//       |    "templateId" : "newMessageAlert",
+//       |    "data" : { },
+//       |    "alertFrom" : "$today",
+//       |    "recipientName" : {
+//       |      "title" : "Mr",
+//       |      "forename" : "Erbert",
+//       |      "secondForename" : "Donaldson",
+//       |      "surname" : "Ducking",
+//       |      "honours" : "KCBE"
+//       |    }
+//       |  },
+//       |  "statutory" : false,
+//       |  "validFrom" : "$today"
+//       |}
+//      """.stripMargin
+//}
 //
 //}
