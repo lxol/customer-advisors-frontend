@@ -46,7 +46,7 @@ trait MessageConnector {
           case Status.CREATED => Future.fromTry(Try {
             (response.json \ "id").as[String]
           }).map(messageId => AdviceStored(messageId)).
-            recoverWith { case x => Future.successful(UnexpectedError(s"Missing id in: ${response.body}}")) }
+            recoverWith { case x => Future.successful(UnexpectedError(s"Missing id in: '${response.body}'")) }
           case status => Future.successful(UnexpectedError(s"Unexpected status : $status from $createMessageAPIurl"))
         }
       }.

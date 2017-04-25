@@ -1,6 +1,24 @@
+/*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.contactadvisors.dependencies
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import play.api.libs.json.Json
+import uk.gov.hmrc.contactadvisors.connectors.NameFromHods
 import uk.gov.hmrc.contactadvisors.connectors.models.TaxpayerName
 
 trait TaxpayerNameStub {
@@ -15,17 +33,7 @@ trait TaxpayerNameStub {
     )
 
   def taxpayerNameBody(taxpayerNameModel: TaxpayerName): String = {
-    s"""
-       |{
-       |    "name": {
-       |        "title": "${taxpayerNameModel.title}",
-       |        "forename": "${taxpayerNameModel.forename}",
-       |        "secondForename": "${taxpayerNameModel.secondForename}",
-       |        "surname": "${taxpayerNameModel.surname}",
-       |        "honours": "${taxpayerNameModel.honours}"
-       |    }
-       |}
-     """.stripMargin
+    Json.stringify(Json.toJson(NameFromHods(Some(taxpayerNameModel))))
   }
 
   def givenTaxpayerNameRespondsWith(status: Int, saUtr: String, taxpayerName: TaxpayerName): Unit = {
