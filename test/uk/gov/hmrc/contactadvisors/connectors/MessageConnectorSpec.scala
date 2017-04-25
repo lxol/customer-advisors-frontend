@@ -30,7 +30,7 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import play.test.WithServer
 import uk.gov.hmrc.contactadvisors.WSHttp
-import uk.gov.hmrc.contactadvisors.domain.{AdviceAlreadyExists, UnexpectedError}
+import uk.gov.hmrc.contactadvisors.domain.{AdviceAlreadyExists, AdviceStored, UnexpectedError}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import uk.gov.hmrc.utils.SecureMessageCreator
@@ -67,15 +67,13 @@ class MessageConnectorSpec extends UnitSpec
   "message connector" should {
     implicit val hc = HeaderCarrier()
 
-    //    "return the message id from the response" in new TestCase {
-    //      givenThat(post(urlEqualTo(expectedPath)).
-    //        withRequestBody(equalToJson(expectedRequestBody))
-    //        willReturn (aResponse().
-    //        withStatus(Status.OK).
-    //        withBody(responseJson(validId.stringify))))
-    //
-    //      connector.create(secureMessage).futureValue shouldBe validId.stringify
-    //    }
+    "return the message id from the response" in new TestCase {
+      givenThat(post(urlEqualTo(expectedPath)).
+        willReturn(aResponse().
+          withStatus(Status.CREATED).withBody("""{"id":"12341234"}""")))
+
+      connector.create(secureMessage).futureValue shouldBe AdviceStored("12341234")
+    }
 
     "indicate an invalid message id when the response contains a corrupted message id" in new TestCase {
       givenThat(post(urlEqualTo(expectedPath)).
@@ -119,7 +117,7 @@ class MessageConnectorSpec extends UnitSpec
           .withStatus(statusCode)))
 
       val response = connector.create(secureMessage).futureValue
-      response shouldBe UnexpectedError(s"Unexpected status : 204 from ${messageServiceBaseUrl+expectedPath}")
+      response shouldBe UnexpectedError(s"Unexpected status : 204 from ${messageServiceBaseUrl + expectedPath}")
     }
 
     "fail when an IOException occurs when saving" in new TestCase {
