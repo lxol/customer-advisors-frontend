@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import play.api.Logger
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
@@ -26,9 +27,16 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.Future
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import uk.gov.hmrc.contactadvisors.FrontendAuditConnector
 import uk.gov.hmrc.contactadvisors.service.{HtmlCleaner, SecureMessageService}
+import uk.gov.hmrc.play.audit.EventKeys
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
+import uk.gov.hmrc.play.config.AppName
+import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.concurrent.ExecutionContext.Implicits.global
 
-trait SecureMessageController extends FrontendController {
+trait SecureMessageController extends FrontendController with CustomerAdviceAudit {
 
   val secureMessageService: SecureMessageService
 
@@ -50,7 +58,11 @@ trait SecureMessageController extends FrontendController {
       formWithErrors => Future.successful(
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
-      advice => secureMessageService.createMessageWithTaxpayerName(cleanAdvice(advice), SaUtr(utr)).map { handleStorageResult(utr) }
+      advice => {
+        val result = secureMessageService.createMessageWithTaxpayerName(cleanAdvice(advice), SaUtr(utr))
+        auditAdvice(result, SaUtr(utr))
+        result.map { handleStorageResult(utr) }
+      }
     )
   }
 
@@ -104,7 +116,49 @@ trait SecureMessageController extends FrontendController {
   }
 }
 
+trait CustomerAdviceAudit {
+
+  def auditSource: String
+
+  def auditConnector: AuditConnector
+
+  def auditAdvice(result: Future[StorageResult], taxId: SaUtr)(implicit hc: HeaderCarrier): Unit = {
+    def createEvent(messageInfo: Map[String, String], auditType: String, transactionName: String) =
+      DataEvent(
+        auditSource = auditSource,
+        auditType = auditType,
+        tags = Map(EventKeys.TransactionName -> transactionName),
+        detail = Map(
+          taxId.name -> taxId.value
+        ) ++ messageInfo
+      )
+
+    result.onComplete { res1 =>
+      res1.map {
+        case AdviceStored(messageId) => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
+        case AdviceAlreadyExists => createEvent(Map(), EventTypes.Failed, "Duplicate Message Found")
+        case UnknownTaxId => createEvent(Map(), EventTypes.Failed, "Unknown Tax Id")
+        case UserIsNotPaperless => createEvent(Map(), EventTypes.Failed, "User is not paperless")
+        case UnexpectedError(errorMessage) => createEvent(Map("reason" -> errorMessage), EventTypes.Failed, "Message Not Stored")
+      }.
+        recover { case ex =>
+          createEvent(Map("reason" -> ex.getMessage), EventTypes.Failed, "Message Not Stored")
+        }.
+        foreach { ev =>
+          auditConnector.sendEvent(ev).onFailure {
+            case err => Logger.error("Could not audit event", err)
+          }
+        }
+    }
+  }
+}
+
+
 object SecureMessageController extends SecureMessageController {
   lazy val secureMessageService: SecureMessageService = SecureMessageService
   lazy val htmlCleaner: HtmlCleaner = HtmlCleaner
+
+  lazy val auditSource: String = AppName.appName
+
+  lazy val auditConnector: AuditConnector = FrontendAuditConnector
 }
