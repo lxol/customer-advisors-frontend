@@ -19,7 +19,6 @@ package uk.gov.hmrc.contactadvisors.controllers
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
-import uk.gov.hmrc.contactadvisors.connectors.SecureMessageRendererConnector
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.frontend.controller.FrontendController
