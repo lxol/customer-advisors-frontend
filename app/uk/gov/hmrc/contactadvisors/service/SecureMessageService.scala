@@ -40,15 +40,12 @@ trait SecureMessageService {
   def createMessageWithTaxpayerName(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
 
     entityResolverConnector.validPaperlessUserWith(saUtr).flatMap {
-      isPaperless =>
-        isPaperless match {
-          case Some(PaperlessPreference(true)) => for {
-            taxpayerName <- taxpayerNameConnector.taxpayerName(saUtr)
-            storageResult <- messageConnector.create(secureMessageFrom(advice, taxpayerName, saUtr))
-          } yield storageResult
-          case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
-          case None => Future.successful(UnknownTaxId)
-        }
+      case Some(PaperlessPreference(true)) => for {
+        taxpayerName <- taxpayerNameConnector.taxpayerName(saUtr)
+        storageResult <- messageConnector.create(secureMessageFrom(advice, taxpayerName, saUtr))
+      } yield storageResult
+      case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
+      case None => Future.successful(UnknownTaxId)
     }.recover {
       case UnexpectedFailure(reason) => UnexpectedError(s"Creation of the advice failed. Reason: $reason")
     }
