@@ -53,18 +53,19 @@ class EntityResolverConnectorSpec extends UnitSpec
           "status" -> "verified"
         )
       )))
-      connector.validPaperlessUserWith(utr).futureValue shouldBe true
+      connector.validPaperlessUserWith(utr).futureValue shouldBe Some(PaperlessPreference(true))
     }
 
     "return CustomerCannotReceiveAlerts when provided a tax identifier for a user that has opted out of paperless" in new TestCase {
       entityResolverReturns(Status.OK, Some(Json.obj("digital" -> false)))
-      intercept[CustomerIsNotPaperless] { await(connector.validPaperlessUserWith(utr)) }
+
+      connector.validPaperlessUserWith(utr).futureValue shouldBe Some(PaperlessPreference(false))
     }
 
     "return UnknownTaxId when provided a tax identifier that cannot be resolved" in new TestCase {
       entityResolverReturns(Status.NOT_FOUND)
 
-      intercept[TaxIdNotFound] { await(connector.validPaperlessUserWith(utr)) }
+      connector.validPaperlessUserWith(utr).futureValue shouldBe None
     }
 
     forAll(Table("statusCode", 400, 401, 403, 415, 500)) { statusCode: Int =>

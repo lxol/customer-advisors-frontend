@@ -38,26 +38,30 @@ trait MessageConnector {
   def create(secureMessage: SecureMessage)
             (implicit hc: HeaderCarrier): Future[StorageResult] = {
 
+    implicit val messageFormats = MessageResponse.formats
+
     val createMessageAPIurl: String = s"$serviceUrl/messages"
 
-    http.POST(url = createMessageAPIurl, body = secureMessage).
-      flatMap { response =>
-        response.status match {
-          case Status.CREATED => Future.fromTry(Try {
-            (response.json \ "id").as[String]
-          }).map(messageId => AdviceStored(messageId)).
-            recoverWith { case x => Future.successful(UnexpectedError(s"Missing id in: '${response.body}'")) }
-          case status => Future.successful(UnexpectedError(s"Unexpected status : $status from $createMessageAPIurl"))
-        }
+    http.POST[SecureMessage, MessageResponse](url = createMessageAPIurl, body = secureMessage).
+      map {
+          case MessageResponse(messageId) => AdviceStored(messageId)
       }.
-      recoverWith {
-        case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => Future.successful(AdviceAlreadyExists)
-        case ex => Future.successful(UnexpectedError(ex.getMessage))
+      recover {
+        case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => AdviceAlreadyExists
+        case ex => UnexpectedError(ex.getMessage)
       }
   }
 }
 
 object MessageConnector extends MessageConnector with ServicesConfig {
   override def http: HttpPost = WSHttp
+
   override def serviceUrl: String = baseUrl("message")
 }
+
+case class MessageResponse(id: String)
+
+object MessageResponse {
+  implicit val formats = Json.format[MessageResponse]
+}
+

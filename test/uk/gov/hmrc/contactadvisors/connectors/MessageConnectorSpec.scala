@@ -74,14 +74,6 @@ class MessageConnectorSpec extends UnitSpec
       connector.create(secureMessage).futureValue shouldBe AdviceStored("12341234")
     }
 
-    "indicate an invalid message id when the response contains a corrupted message id" in new TestCase {
-      givenThat(post(urlEqualTo(expectedPath)).
-        willReturn(aResponse().
-          withStatus(Status.CREATED)))
-
-      connector.create(secureMessage).futureValue shouldBe UnexpectedError("Missing id in: ''")
-    }
-
     "return MessageAlreadyExists failure with true when the message service returns 409 (conflict) while saving" in
       new TestCase {
         stubFor(post(urlEqualTo(expectedPath)).willReturn(aResponse().withStatus(Status.CONFLICT)))
@@ -107,16 +99,6 @@ class MessageConnectorSpec extends UnitSpec
           }
         }
       }
-    }
-
-    "fail with a reason indicating the status code when message returns 204" in new TestCase {
-      val statusCode = 204
-      givenThat(post(urlEqualTo(expectedPath))
-        .willReturn(aResponse()
-          .withStatus(statusCode)))
-
-      val response = connector.create(secureMessage).futureValue
-      response shouldBe UnexpectedError(s"Unexpected status : 204 from ${messageServiceBaseUrl + expectedPath}")
     }
 
     "fail when an IOException occurs when saving" in new TestCase {

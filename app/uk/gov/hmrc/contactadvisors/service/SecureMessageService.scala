@@ -21,7 +21,7 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import uk.gov.hmrc.contactadvisors.connectors.models._
-import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, TaxpayerNameConnector}
+import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference, TaxpayerNameConnector}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -30,23 +30,27 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait SecureMessageService {
   def taxpayerNameConnector: TaxpayerNameConnector
+
   def messageConnector: MessageConnector
+
   def entityResolverConnector: EntityResolverConnector
 
   def generateExternalRefID = UUID.randomUUID().toString
 
   def createMessageWithTaxpayerName(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
 
-    entityResolverConnector.validPaperlessUserWith(saUtr).flatMap{
-      isPaperless => for {
-        taxpayerName <- taxpayerNameConnector.taxpayerName(saUtr)
-        storageResult <- messageConnector.create(secureMessageFrom(advice, taxpayerName, saUtr))
-      } yield storageResult
+    entityResolverConnector.validPaperlessUserWith(saUtr).flatMap {
+      isPaperless =>
+        isPaperless match {
+          case Some(PaperlessPreference(true)) => for {
+            taxpayerName <- taxpayerNameConnector.taxpayerName(saUtr)
+            storageResult <- messageConnector.create(secureMessageFrom(advice, taxpayerName, saUtr))
+          } yield storageResult
+          case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
+          case None => Future.successful(UnknownTaxId)
+        }
     }.recover {
-      case MessageAlreadyExists(msg) => AdviceAlreadyExists
       case UnexpectedFailure(reason) => UnexpectedError(s"Creation of the advice failed. Reason: $reason")
-      case TaxIdNotFound(_) => UnknownTaxId
-      case CustomerIsNotPaperless(_) => UserIsNotPaperless
     }
   }
 
@@ -65,6 +69,8 @@ trait SecureMessageService {
 object SecureMessageService extends SecureMessageService {
 
   override def taxpayerNameConnector: TaxpayerNameConnector = TaxpayerNameConnector
+
   override def messageConnector: MessageConnector = MessageConnector
+
   override def entityResolverConnector: EntityResolverConnector = EntityResolverConnector
 }

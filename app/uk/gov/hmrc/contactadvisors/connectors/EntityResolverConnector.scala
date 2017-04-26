@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
-import play.api.http.Status
+import play.api.libs.json.Json
 import uk.gov.hmrc.contactadvisors.WSHttp
-import uk.gov.hmrc.contactadvisors.domain.{CustomerIsNotPaperless, TaxIdNotFound, UnexpectedFailure, UnknownTaxId}
+import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http._
@@ -31,27 +31,18 @@ trait EntityResolverConnector {
 
   def serviceUrl: String
 
-  def validPaperlessUserWith(utr: SaUtr)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def validPaperlessUserWith(utr: SaUtr)(implicit hc: HeaderCarrier): Future[Option[PaperlessPreference]] = {
+
+    implicit val preferenceFormats = PaperlessPreference.formats
+
     def unexpectedFailure(msg: String) = Future.failed(
       UnexpectedFailure(
         s"""Could not determine if user with utr $utr is paperless: $msg"""
       )
     )
 
-    http.GET(s"$serviceUrl/portal/preferences/sa/$utr").
-      flatMap { response =>
-        response.status match {
-          case Status.OK if (response.json \ "digital").as[Boolean] => Future.successful(true)
-          case Status.OK => Future.failed(
-            CustomerIsNotPaperless(s"Customer with tax id $utr has not opted in to paperless")
-          )
-          case code => unexpectedFailure(
-            s"""Status code [$code] with response body [${response.body}]"""
-          )
-        }
-      }.
+    http.GET[Option[PaperlessPreference]](s"$serviceUrl/portal/preferences/sa/$utr").
       recoverWith {
-        case nfe: NotFoundException => Future.failed(TaxIdNotFound(s"unknown tax id [$utr] provided"))
         case Upstream4xxResponse(msg, code, _, _) => unexpectedFailure(msg)
         case Upstream5xxResponse(msg, code, _) => unexpectedFailure(msg)
         case http: HttpException => unexpectedFailure(
@@ -66,3 +57,7 @@ object EntityResolverConnector extends EntityResolverConnector with ServicesConf
   def serviceUrl: String = baseUrl("entity-resolver")
 }
 
+case class PaperlessPreference(digital: Boolean)
+object PaperlessPreference {
+  implicit val formats = Json.format[PaperlessPreference]
+}

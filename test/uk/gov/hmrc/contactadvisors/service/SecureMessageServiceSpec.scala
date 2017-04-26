@@ -23,7 +23,7 @@ import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import uk.gov.hmrc.contactadvisors.connectors.models.{SecureMessage, TaxpayerName}
-import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, TaxpayerNameConnector}
+import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference, TaxpayerNameConnector}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -40,7 +40,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
     "get taxpayer name details when saUtr is paperless, store the message and return an AdviceStored result" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(true))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(Some(PaperlessPreference(true))))
       when(taxpayerNameConnectorMock.taxpayerName(validSaUtr)).thenReturn(Future.successful(Some(validTaxpayerName)))
       when(messageConnectorMock.create(messageCaptor.capture())(any())).thenReturn(Future.successful(AdviceStored("messageId-1234")))
 
@@ -54,7 +54,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
     "get no taxpayer details when saUtr is paperless, creates a message with empty recipient name store the message and return an AdviceStored result" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(true))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(Some(PaperlessPreference(true))))
       when(taxpayerNameConnectorMock.taxpayerName(validSaUtr)).thenReturn(Future.successful(None))
       when(messageConnectorMock.create(messageCaptor.capture())(any())).thenReturn(Future.successful(AdviceStored("messageId-1234")))
 
@@ -68,7 +68,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
     "get taxpayer name details when saUtr is paperless, and handle failure in creating the message" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(true))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(Some(PaperlessPreference(true))))
       when(taxpayerNameConnectorMock.taxpayerName(validSaUtr)).thenReturn(Future.successful(Some(validTaxpayerName)))
       when(messageConnectorMock.create(messageCaptor.capture())(any())).thenReturn(Future.successful(AdviceAlreadyExists))
 
@@ -79,7 +79,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
     "handle case when taxpayer is not paperless" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.failed(CustomerIsNotPaperless(s"Customer with tax id ${validSaUtr.value} has not opted in to paperless")))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(Some(PaperlessPreference(false))))
 
       val storageResult = secureMessageService.createMessageWithTaxpayerName(advice, validSaUtr).futureValue
 
@@ -90,7 +90,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
     "handle case when taxpayer is not found" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.failed(TaxIdNotFound(s"unknown tax id [${validSaUtr.value}] provided")))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.successful(None))
 
       val storageResult = secureMessageService.createMessageWithTaxpayerName(advice, validSaUtr).futureValue
 
