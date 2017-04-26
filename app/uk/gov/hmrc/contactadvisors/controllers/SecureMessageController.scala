@@ -136,13 +136,13 @@ trait CustomerAdviceAudit {
     result.onComplete { res1 =>
       res1.map {
         case AdviceStored(messageId) => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
-        case AdviceAlreadyExists => createEvent(Map(), EventTypes.Failed, "Duplicate Message Found")
-        case UnknownTaxId => createEvent(Map(), EventTypes.Failed, "Unknown Tax Id")
-        case UserIsNotPaperless => createEvent(Map(), EventTypes.Failed, "User is not paperless")
-        case UnexpectedError(errorMessage) => createEvent(Map("reason" -> errorMessage), EventTypes.Failed, "Message Not Stored")
+        case AdviceAlreadyExists => createEvent(Map("reason" -> "Duplicate Message Found"), EventTypes.Failed, "Message Not Stored")
+        case UnknownTaxId => createEvent(Map("reason" -> "Unknown Tax Id"), EventTypes.Failed, "Message Not Stored")
+        case UserIsNotPaperless => createEvent(Map("reason" -> "User is not paperless"), EventTypes.Failed, "Message Not Stored")
+        case UnexpectedError(errorMessage) => createEvent(Map("reason" -> s"Unexpected Error: ${errorMessage}"), EventTypes.Failed, "Message Not Stored")
       }.
         recover { case ex =>
-          createEvent(Map("reason" -> ex.getMessage), EventTypes.Failed, "Message Not Stored")
+          createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
         }.
         foreach { ev =>
           auditConnector.sendEvent(ev).onFailure {
