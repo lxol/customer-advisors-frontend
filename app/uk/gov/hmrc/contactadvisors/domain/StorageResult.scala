@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.play.views.html.helpers._
-@import play.api.mvc._
+package uk.gov.hmrc.contactadvisors.domain
 
-@(utr: String)(implicit request: Request[_], messages: Messages)
-
-@uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Advice creation successful", bodyClasses = None) {
-
-    <h2>Reply to customer with SA-UTR @utr</h2>
-    <div class="alert alert--success" role="alert">
-        <p class="alert__message">
-            Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox.
-        </p>
-    </div>
-
-}
+sealed trait StorageResult extends Product with Serializable
+case class AdviceStored(messageId: String) extends StorageResult
+case object AdviceAlreadyExists extends StorageResult
+case object UnknownTaxId extends StorageResult
+case object UserIsNotPaperless extends StorageResult
+final case class UnexpectedError(msg: String) extends StorageResult

@@ -26,10 +26,10 @@ import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.contactadvisors.dependencies.SecureMessageRenderer
-import uk.gov.hmrc.play.it.{ExternalService, MicroServiceEmbeddedServer}
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import uk.gov.hmrc.utils.WithWiremock
+import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub, TaxpayerNameStub}
+import uk.gov.hmrc.domain.SaUtr
+import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -40,11 +40,17 @@ class SecureMessageControllerSpec
   with ScalaFutures
   with IntegrationPatience
   with WithWiremock
-  with SecureMessageRenderer {
+  with EntityResolverStub
+  with TaxpayerNameStub
+  with MessageStub {
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
   val customer_utr = UUID.randomUUID.toString
+
+  val utr = SaUtr("123456789")
+  val subject = "This is a response to your HMRC request"
+  val adviceBody = "<p>This is the content of the secure message</p>"
 
   "GET /inbox/:utr" should {
     "return 200" in {
@@ -119,12 +125,14 @@ class SecureMessageControllerSpec
     }
 
     "remove script tag from message and subject" in {
-      givenSecureMessageRendererRespondsSuccessfully()
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       val xssMessage = SecureMessageController.submit(utr.value)(
         FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "This is message subject<script>alert('hax')</script>",
-          "message" -> "<p>advice body</p><script>alert('more hax')</script>"
+          "subject" -> "This is a response to your HMRC request<script>alert('hax')</script>",
+          "message" -> "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
         )
       )
 
@@ -132,32 +140,37 @@ class SecureMessageControllerSpec
     }
 
     "redirect to the success page when the form submission is successful" in {
-      givenSecureMessageRendererRespondsSuccessfully()
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
     }
 
     "redirect and indicate a duplicate message submission" in {
-      givenSecureMessageRendererReturnsDuplicateAdvice()
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
     }
 
     "redirect and indicate an unexpected error has occurred when processing the submission" in {
-      givenSecureMessageRendererRespondsWith(Status.BAD_REQUEST)
+      givenEntityResolverReturnsAPaperlessUser(utr.value)
+      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
+      givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
     }
 
     "redirect and indicate that the user has not opted in for paperless communications" in {
-      givenSecureMessageRendererFindsThatUserIsNotPaperless()
+      givenEntityResolverReturnsANonPaperlessUser(utr.value)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
     }
 
-
     "redirect and indicate a submission for unknown utr" in {
-      givenSecureMessageRendererCannotFindTheUtr()
+      givenEntityResolverReturnsNotFound(utr.value)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
     }
@@ -240,6 +253,5 @@ class SecureMessageControllerSpec
 
     }
   }
-
-  override val dependenciesPort: Int = 9847
+  override val dependenciesPort: Int = 10100
 }
