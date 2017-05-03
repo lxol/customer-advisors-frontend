@@ -38,7 +38,7 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
   "SecureMessageController" should {
 
     "audit the successful event" in new TestCase {
-      when(secureMessageServiceMock.createMessageWithTaxpayerName(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
         .thenReturn(Future.successful(AdviceStored("1234")))
 
       controller.submit("123456789")(request).futureValue
@@ -55,7 +55,7 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
     }
 
     "audit the duplicate message event" in new TestCase {
-      when(secureMessageServiceMock.createMessageWithTaxpayerName(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
         .thenReturn(Future.successful(AdviceAlreadyExists))
 
       controller.submit("123456789")(request).futureValue
@@ -72,7 +72,7 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
     }
 
     "audit the unknown tax id event" in new TestCase {
-      when(secureMessageServiceMock.createMessageWithTaxpayerName(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
         .thenReturn(Future.successful(UnknownTaxId))
 
       controller.submit("123456789")(request).futureValue
@@ -89,7 +89,7 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
     }
 
     "audit the user not paperless event" in new TestCase {
-      when(secureMessageServiceMock.createMessageWithTaxpayerName(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
         .thenReturn(Future.successful(UserIsNotPaperless))
 
       controller.submit("123456789")(request).futureValue
@@ -106,7 +106,7 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
     }
 
     "audit the unexpected error event" in new TestCase {
-      when(secureMessageServiceMock.createMessageWithTaxpayerName(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
         .thenReturn(Future.successful(UnexpectedError("this is the reason")))
 
       controller.submit("123456789")(request).futureValue

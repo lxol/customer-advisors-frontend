@@ -26,7 +26,7 @@ class SecureMessageSpec extends UnitSpec {
   "SecureMessage.format" should {
 
     "convert an AdviceCreationBody into the expected json" in {
-      val recipient = Recipient(SaUtr("987654321"), TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith")))
+      val recipient = Recipient(SaUtr("987654321"), Some(TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith"))))
       val externalReference = ExternalReference("123412342314", "customer-advisor")
       val messageType = "advisor-reply"
       val subject = "This is a response to your HMRC request"

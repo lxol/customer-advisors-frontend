@@ -59,7 +59,7 @@ trait SecureMessageController extends FrontendController with CustomerAdviceAudi
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
       advice => {
-        val result = secureMessageService.createMessageWithTaxpayerName(cleanAdvice(advice), SaUtr(utr))
+        val result = secureMessageService.createMessage(cleanAdvice(advice), SaUtr(utr))
         auditAdvice(result, SaUtr(utr))
         result.map { handleStorageResult(utr) }
       }

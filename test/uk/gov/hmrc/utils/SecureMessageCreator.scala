@@ -26,7 +26,7 @@ object SecureMessageCreator {
   val taxpayerName = TaxpayerName(title = Some("Mr"), forename = Some("John"), surname = Some("Smith"))
 
   def recipient(identifier: SaUtr = utr, name: TaxpayerName = taxpayerName) = {
-    Recipient(identifier, name)
+    Recipient(identifier, Some(name))
   }
 
   val externalReference = ExternalReference("123412342314", "customer-advisor")

@@ -21,7 +21,7 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import uk.gov.hmrc.contactadvisors.connectors.models._
-import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference, TaxpayerNameConnector}
+import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -29,20 +29,17 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 trait SecureMessageService {
-  def taxpayerNameConnector: TaxpayerNameConnector
-
   def messageConnector: MessageConnector
 
   def entityResolverConnector: EntityResolverConnector
 
   def generateExternalRefID = UUID.randomUUID().toString
 
-  def createMessageWithTaxpayerName(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
+  def createMessage(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
 
     entityResolverConnector.validPaperlessUserWith(saUtr).flatMap {
       case Some(PaperlessPreference(true)) => for {
-        taxpayerName <- taxpayerNameConnector.taxpayerName(saUtr)
-        storageResult <- messageConnector.create(secureMessageFrom(advice, taxpayerName, saUtr))
+        storageResult <- messageConnector.create(secureMessageFrom(advice, saUtr))
       } yield storageResult
       case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
       case None => Future.successful(UnknownTaxId)
@@ -51,8 +48,8 @@ trait SecureMessageService {
     }
   }
 
-  def secureMessageFrom(advice: Advice, taxpayerName: Option[TaxpayerName], saUtr: SaUtr): SecureMessage = {
-    val recipient = Recipient(saUtr, taxpayerName.getOrElse(TaxpayerName()))
+  def secureMessageFrom(advice: Advice, saUtr: SaUtr): SecureMessage = {
+    val recipient = Recipient(saUtr, None)
     val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
     val messageType = "advisor-reply"
     val subject = advice.subject
@@ -64,8 +61,6 @@ trait SecureMessageService {
 }
 
 object SecureMessageService extends SecureMessageService {
-
-  override def taxpayerNameConnector: TaxpayerNameConnector = TaxpayerNameConnector
 
   override def messageConnector: MessageConnector = MessageConnector
 

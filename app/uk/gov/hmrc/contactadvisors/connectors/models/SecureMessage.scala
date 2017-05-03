@@ -36,7 +36,7 @@ object TaxpayerName {
   implicit val formats = Json.format[TaxpayerName]
 }
 
-final case class Recipient(taxIdentifier: SaUtr, name: TaxpayerName)
+final case class Recipient(taxIdentifier: SaUtr, name: Option[TaxpayerName])
 object Recipient {
 
   implicit val taxIdWrites: Format[SaUtr] = (

@@ -60,11 +60,6 @@ trait MessageStub {
                |    "taxIdentifier": {
                |      "name": "sautr",
                |      "value": "${request.recipient.taxIdentifier.value}"
-               |    },
-               |    "name": {
-               |      "title": "${request.recipient.name.title.get}",
-               |      "forename": "${request.recipient.name.forename.get}",
-               |      "surname": "${request.recipient.name.surname.get}"
                |    }
                |  },
                |  "externalRef": {
