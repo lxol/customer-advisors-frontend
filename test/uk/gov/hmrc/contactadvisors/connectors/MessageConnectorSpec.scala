@@ -117,7 +117,6 @@ class MessageConnectorSpec extends UnitSpec
     val expectedPath = s"/messages"
 
     val secureMessage = SecureMessageCreator.message
-    val fullTaxpayerName = SecureMessageCreator.taxpayerName
 
     val connector = new MessageConnector {
 

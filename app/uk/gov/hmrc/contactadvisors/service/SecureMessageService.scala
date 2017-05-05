@@ -49,7 +49,7 @@ trait SecureMessageService {
   }
 
   def secureMessageFrom(advice: Advice, saUtr: SaUtr): SecureMessage = {
-    val recipient = Recipient(saUtr, None)
+    val recipient = Recipient(saUtr)
     val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
     val messageType = "advisor-reply"
     val subject = advice.subject
