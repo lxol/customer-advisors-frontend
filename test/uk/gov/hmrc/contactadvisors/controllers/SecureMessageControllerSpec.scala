@@ -26,7 +26,7 @@ import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub, TaxpayerNameStub}
+import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub}
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
@@ -41,7 +41,6 @@ class SecureMessageControllerSpec
   with IntegrationPatience
   with WithWiremock
   with EntityResolverStub
-  with TaxpayerNameStub
   with MessageStub {
 
   val getRequest = FakeRequest("GET", "/")
@@ -126,7 +125,6 @@ class SecureMessageControllerSpec
 
     "remove script tag from message and subject" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
       givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       val xssMessage = SecureMessageController.submit(utr.value)(
@@ -141,7 +139,6 @@ class SecureMessageControllerSpec
 
     "redirect to the success page when the form submission is successful" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
       givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
@@ -149,7 +146,6 @@ class SecureMessageControllerSpec
 
     "redirect and indicate a duplicate message submission" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
       givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
@@ -157,7 +153,6 @@ class SecureMessageControllerSpec
 
     "redirect and indicate an unexpected error has occurred when processing the submission" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenTaxpayerNameRespondsWith(Status.OK, utr.value, SecureMessageCreator.taxpayerName)
       givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"

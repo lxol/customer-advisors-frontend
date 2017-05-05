@@ -31,12 +31,7 @@ object ExternalReference {
   implicit val formats = Json.format[ExternalReference]
 }
 
-final case class TaxpayerName(title: Option[String] = None, forename: Option[String] = None, secondForename: Option[String] = None, surname: Option[String] = None, honours: Option[String] = None)
-object TaxpayerName {
-  implicit val formats = Json.format[TaxpayerName]
-}
-
-final case class Recipient(taxIdentifier: SaUtr, name: TaxpayerName)
+final case class Recipient(taxIdentifier: SaUtr)
 object Recipient {
 
   implicit val taxIdWrites: Format[SaUtr] = (
