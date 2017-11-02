@@ -123,7 +123,7 @@ class SecureMessageControllerSpec
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
 
-    "remove script tag from message and subject" in {
+    "Leave script tags in the message and subject" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
 
