@@ -125,7 +125,7 @@ class SecureMessageControllerSpec
 
     "remove script tag from message and subject" in {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
+      givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
 
       val xssMessage = SecureMessageController.submit(utr.value)(
         FakeRequest().withFormUrlEncodedBody(

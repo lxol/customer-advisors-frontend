@@ -24,7 +24,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.test.FakeRequest
 import uk.gov.hmrc.contactadvisors.domain._
-import uk.gov.hmrc.contactadvisors.service.{HtmlCleaner, SecureMessageService}
+import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
@@ -128,16 +128,13 @@ trait TestCase extends MockitoSugar {
 
   val secureMessageServiceMock = mock[SecureMessageService]
   val auditConnectorMock = mock[AuditConnector]
-  val htmlCleanerMock = mock[HtmlCleaner]
 
   val controller = new SecureMessageController {
     override val secureMessageService: SecureMessageService = secureMessageServiceMock
-    override def htmlCleaner: HtmlCleaner = htmlCleanerMock
     override def auditSource: String = "customer-advisors-frontend"
     override def auditConnector: AuditConnector = auditConnectorMock
   }
   val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
-  when(htmlCleanerMock.cleanHtml(any())).thenReturn("This is a clean body")
   when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
 
   implicit val hc = HeaderCarrier
