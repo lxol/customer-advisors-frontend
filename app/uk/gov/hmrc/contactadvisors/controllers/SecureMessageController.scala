@@ -28,7 +28,7 @@ import scala.concurrent.Future
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
 import uk.gov.hmrc.contactadvisors.FrontendAuditConnector
-import uk.gov.hmrc.contactadvisors.service.{HtmlCleaner, SecureMessageService}
+import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
@@ -39,8 +39,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait SecureMessageController extends FrontendController with CustomerAdviceAudit {
 
   val secureMessageService: SecureMessageService
-
-  def htmlCleaner: HtmlCleaner
 
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
@@ -59,7 +57,7 @@ trait SecureMessageController extends FrontendController with CustomerAdviceAudi
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
       advice => {
-        val result = secureMessageService.createMessage(cleanAdvice(advice), SaUtr(utr))
+        val result = secureMessageService.createMessage(advice, SaUtr(utr))
         auditAdvice(result, SaUtr(utr))
         result.map { handleStorageResult(utr) }
       }
@@ -110,10 +108,6 @@ trait SecureMessageController extends FrontendController with CustomerAdviceAudi
     case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
     case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
   }
-
-  private def cleanAdvice(dirtyAdvice: Advice): Advice = {
-    return Advice(htmlCleaner.cleanHtml(dirtyAdvice.subject), htmlCleaner.cleanHtml(dirtyAdvice.message))
-  }
 }
 
 trait CustomerAdviceAudit {
@@ -156,7 +150,6 @@ trait CustomerAdviceAudit {
 
 object SecureMessageController extends SecureMessageController {
   lazy val secureMessageService: SecureMessageService = SecureMessageService
-  lazy val htmlCleaner: HtmlCleaner = HtmlCleaner
 
   lazy val auditSource: String = AppName.appName
 

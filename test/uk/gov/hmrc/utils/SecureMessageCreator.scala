@@ -27,7 +27,10 @@ object SecureMessageCreator {
   val messageType = "advisor-reply"
   val validFrom = DateTimeUtils.now.toLocalDate
   val subject = "This is a response to your HMRC request"
+  val uncleanSubject = "This is a response to your HMRC request<script>alert('hax')</script>"
   val content = new String(Base64.encodeBase64("<p>This is the content of the secure message</p>".getBytes("UTF-8")))
+  val uncleanContent = new String(Base64.encodeBase64("<p>This is the content of the secure message</p><script>alert('more hax')</script>".getBytes("UTF-8")))
   val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
   val message = SecureMessage(Recipient(utr), externalReference, messageType, subject, content, validFrom, details)
+  val uncleanMessage = SecureMessage(Recipient(utr), externalReference, messageType, uncleanSubject, uncleanContent, validFrom, details)
 }
