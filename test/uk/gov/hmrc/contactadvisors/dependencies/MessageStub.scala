@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package uk.gov.hmrc.contactadvisors.dependencies
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
-import play.api.libs.json.Json
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
 
 trait MessageStub {
