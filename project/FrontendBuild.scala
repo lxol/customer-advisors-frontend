@@ -19,9 +19,8 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   def apply() = Seq(
-
     ws,
-    "uk.gov.hmrc"                 %% "frontend-bootstrap"       % "8.17.0",
+    "uk.gov.hmrc"                 %% "frontend-bootstrap"       % "8.19.0",
     "uk.gov.hmrc"                 %% "play-partials"            % "6.1.0",
     "org.jsoup"                   %  "jsoup"                    % "1.10.2",
     "com.github.tomakehurst"      %  "wiremock"                 % "1.58"  % "test",
