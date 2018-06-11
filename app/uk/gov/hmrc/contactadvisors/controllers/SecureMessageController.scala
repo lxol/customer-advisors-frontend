@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import javax.inject.Singleton
 import play.api.Logger
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 import play.api.i18n.Messages.Implicits._
@@ -36,7 +37,7 @@ import uk.gov.hmrc.play.config.AppName
 import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait SecureMessageController extends FrontendController with CustomerAdviceAudit {
+abstract class SecureMessageControllerBase extends FrontendController with CustomerAdviceAudit {
 
   val secureMessageService: SecureMessageService
 
@@ -148,10 +149,11 @@ trait CustomerAdviceAudit {
 }
 
 
-object SecureMessageController extends SecureMessageController {
+@Singleton
+class SecureMessageController extends SecureMessageControllerBase {
   lazy val secureMessageService: SecureMessageService = SecureMessageService
 
-  lazy val auditSource: String = AppName.appName
+  //lazy val auditSource: String = AppName.appName
 
-  lazy val auditConnector: AuditConnector = FrontendAuditConnector
+  //lazy val auditConnector: AuditConnector = FrontendAuditConnector
 }

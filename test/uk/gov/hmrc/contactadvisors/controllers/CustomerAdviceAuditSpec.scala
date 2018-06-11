@@ -129,7 +129,7 @@ trait TestCase extends MockitoSugar {
   val secureMessageServiceMock = mock[SecureMessageService]
   val auditConnectorMock = mock[AuditConnector]
 
-  val controller = new SecureMessageController {
+  val controller = new SecureMessageControllerBase {
     override val secureMessageService: SecureMessageService = secureMessageServiceMock
     override def auditSource: String = "customer-advisors-frontend"
     override def auditConnector: AuditConnector = auditConnectorMock

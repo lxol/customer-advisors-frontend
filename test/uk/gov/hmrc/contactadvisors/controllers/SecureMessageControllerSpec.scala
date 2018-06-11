@@ -43,6 +43,16 @@ class SecureMessageControllerSpec
   with EntityResolverStub
   with MessageStub {
 
+  trait Setup {
+    val controller = new SecureMessageController()
+    def submissionOfCompletedForm() = controller.submit(utr.value)(
+      FakeRequest().withFormUrlEncodedBody(
+        "subject" -> subject,
+        "message" -> adviceBody
+      )
+    )
+  }
+
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
   val customer_utr = UUID.randomUUID.toString
@@ -52,25 +62,25 @@ class SecureMessageControllerSpec
   val adviceBody = "<p>This is the content of the secure message</p>"
 
   "GET /inbox/:utr" should {
-    "return 200" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+    "return 200" in new Setup {
+      val result = controller.inbox(customer_utr)(getRequest)
       status(result) shouldBe Status.OK
     }
 
-    "return HTML" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+    "return HTML" in new Setup {
+      val result = controller.inbox(customer_utr)(getRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
 
-    "show main banner" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+    "show main banner" in new Setup {
+      val result = controller.inbox(customer_utr)(getRequest)
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByTag("header").attr("id") shouldBe "global-header"
     }
 
-    "have the expected elements on the form" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+    "have the expected elements on the form" in new Setup {
+      val result = controller.inbox(customer_utr)(getRequest)
       status(result) shouldBe 200
 
       val document = Jsoup.parse(contentAsString(result))
@@ -101,8 +111,8 @@ class SecureMessageControllerSpec
   }
 
   "POST /inbox/:utr" should {
-    "indicate a bad request when any of the form elements are empty" in {
-      val emptySubject = SecureMessageController.submit(customer_utr)(
+    "indicate a bad request when any of the form elements are empty" in new Setup {
+      val emptySubject = controller.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "message" -> "A message success to the customer. lkasdfjas;ldfjk"
         )
@@ -110,7 +120,7 @@ class SecureMessageControllerSpec
       Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
       status(emptySubject) shouldBe BAD_REQUEST
 
-      val emptyMessage = SecureMessageController.submit(customer_utr)(
+      val emptyMessage = controller.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "subject"
         )
@@ -118,16 +128,16 @@ class SecureMessageControllerSpec
       Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
       status(emptyMessage) shouldBe BAD_REQUEST
 
-      val emptyFormFields = SecureMessageController.submit(customer_utr)(FakeRequest())
+      val emptyFormFields = controller.submit(customer_utr)(FakeRequest())
       Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 2
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
 
-    "Leave script tags in the message and subject" in {
+    "Leave script tags in the message and subject" in new Setup {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
 
-      val xssMessage = SecureMessageController.submit(utr.value)(
+      val xssMessage = controller.submit(utr.value)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "This is a response to your HMRC request<script>alert('hax')</script>",
           "message" -> "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
@@ -137,34 +147,35 @@ class SecureMessageControllerSpec
       xssMessage returnsRedirectTo s"/inbox/$utr/success"
     }
 
-    "redirect to the success page when the form submission is successful" in {
+    "redirect to the success page when the form submission is successful" in new Setup {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
     }
 
-    "redirect and indicate a duplicate message submission" in {
+    "redirect and indicate a duplicate message submission" in new Setup {
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
     }
 
-    "redirect and indicate an unexpected error has occurred when processing the submission" in {
+    "redirect and indicate an unexpected error has occurred when processing the submission" in new Setup {
+
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
     }
 
-    "redirect and indicate that the user has not opted in for paperless communications" in {
+    "redirect and indicate that the user has not opted in for paperless communications" in new Setup {
       givenEntityResolverReturnsANonPaperlessUser(utr.value)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
     }
 
-    "redirect and indicate a submission for unknown utr" in {
+    "redirect and indicate a submission for unknown utr" in new Setup {
       givenEntityResolverReturnsNotFound(utr.value)
 
       submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
@@ -173,44 +184,38 @@ class SecureMessageControllerSpec
   }
 
   "submission result page" should {
-    "contain correct message for success" in {
-      SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+    "contain correct message for success" in new Setup {
+      controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice creation successful", utr.value,
         "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
         )
     }
-    "contain correct message for duplicate" in {
-      SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+    "contain correct message for duplicate" in new Setup {
+      controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice already exists", utr.value,
         "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
         )
     }
-    "contain correct message for unknown taxid" in {
-      SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+    "contain correct message for unknown taxid" in new Setup {
+      controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unknown UTR", utr.value,
         "The SA-UTR provided is not recognised by the Digital Tax Platform."
         )
     }
-    "contain correct message for not paperless user" in {
-      SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+    "contain correct message for not paperless user" in new Setup {
+      controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "User is not paperless", utr.value,
         s"The customer is not registered for paperless communications."
         )
     }
-    "contain correct message for unexpected error" in {
-      SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+    "contain correct message for unexpected error" in new Setup {
+      controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unexpected error", utr.value,
         "There is an unexpected problem. There may be an issue with the connection. Please try again."
         )
     }
   }
 
-  def submissionOfCompletedForm() = SecureMessageController.submit(utr.value)(
-    FakeRequest().withFormUrlEncodedBody(
-      "subject" -> subject,
-      "message" -> adviceBody
-    )
-  )
 
   implicit class ShouldContainPageWithMessage(result: Future[Result]) {
     def shouldContainPageWithTitleAndMessage(title: String, utr: String, message: String) = {

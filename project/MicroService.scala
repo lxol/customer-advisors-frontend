@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt.Tests.{SubProcess, Group}
 import sbt._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import play.routes.compiler.StaticRoutesGenerator
+import play.routes.compiler.InjectedRoutesGenerator
 
 trait MicroService {
 
@@ -33,7 +33,7 @@ trait MicroService {
       fork in Test := false,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-      routesGenerator := StaticRoutesGenerator,
+      routesGenerator := InjectedRoutesGenerator,
       scalacOptions ++= List(
         "-feature",
         "-language:postfixOps",
