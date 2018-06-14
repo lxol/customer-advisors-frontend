@@ -21,30 +21,35 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import com.github.tomakehurst.wiremock.http.Fault
+import javax.inject.{Inject, Singleton}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatestplus.play.OneServerPerSuite
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.test.WithServer
-import uk.gov.hmrc.contactadvisors.WSHttp
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.domain.{AdviceAlreadyExists, AdviceStored, UnexpectedError}
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost }
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import uk.gov.hmrc.utils.SecureMessageCreator
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
+
+@Singleton
+class TestMessageConnector @Inject()(http: HttpClient,
+                                     override val runModeConfiguration: Configuration,
+                                     override val environment: Environment) extends MessageConnector(http, runModeConfiguration, environment) {
+  override lazy val serviceUrl: String = s"http://localhost:58008"
+}
 
 class MessageConnectorSpec extends UnitSpec
-  with MockitoSugar
+  with OneServerPerSuite
   with ScalaFutures
-  with BeforeAndAfterAll
-  with BeforeAndAfterEach
-  with WithFakeApplication
+  with WithWiremock
   with TableDrivenPropertyChecks
   with IntegrationPatience {
 
   val messagePort = 58008
-  val wireMockServer = new WireMockServer(wireMockConfig().port(messagePort))
+  override lazy val wireMockServer = new WireMockServer(wireMockConfig().port(messagePort))
 
   override def beforeAll() = {
     super.beforeAll()
@@ -111,19 +116,14 @@ class MessageConnectorSpec extends UnitSpec
     }
   }
 
-  trait TestCase extends WithServer {
+  trait TestCase {
 
     val messageServiceBaseUrl = s"http://localhost:$messagePort"
     val expectedPath = s"/messages"
 
     val secureMessage = SecureMessageCreator.message
 
-    val connector = new MessageConnector {
-
-      lazy val http: HttpPost = WSHttp
-
-      override def serviceUrl: String = messageServiceBaseUrl
-    }
+    val connector = app.injector.instanceOf(classOf[TestMessageConnector])
   }
 
 }

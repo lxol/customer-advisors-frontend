@@ -16,20 +16,27 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
+import javax.inject.{Inject, Singleton}
+import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.contactadvisors.WSHttp
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpException, HttpGet, Upstream4xxResponse, Upstream5xxResponse }
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
-trait EntityResolverConnector {
-  def http: HttpGet
+@Singleton
+class EntityResolverConnector @Inject()(http: HttpClient,
+                                        override val runModeConfiguration: Configuration,
+                                        val environment: Environment) extends Status with ServicesConfig {
 
-  def serviceUrl: String
+  lazy val serviceUrl: String = baseUrl("entity-resolver")
+
+  override protected def mode = environment.mode
 
   def validPaperlessUserWith(utr: SaUtr)(implicit hc: HeaderCarrier): Future[Option[PaperlessPreference]] = {
 
@@ -51,13 +58,9 @@ trait EntityResolverConnector {
       }
   }
 }
-object EntityResolverConnector extends EntityResolverConnector with ServicesConfig {
-  lazy val http: HttpGet = WSHttp
-
-  def serviceUrl: String = baseUrl("entity-resolver")
-}
 
 case class PaperlessPreference(digital: Boolean)
+
 object PaperlessPreference {
   implicit val formats = Json.format[PaperlessPreference]
 }

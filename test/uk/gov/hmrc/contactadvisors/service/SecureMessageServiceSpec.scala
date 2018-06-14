@@ -18,10 +18,10 @@ package uk.gov.hmrc.contactadvisors.service
 
 import org.apache.commons.codec.binary.Base64
 import org.mockito.ArgumentCaptor
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
-import org.mockito.Matchers._
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
 import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
 import uk.gov.hmrc.contactadvisors.domain._
@@ -92,11 +92,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
     val messageConnectorMock: MessageConnector = mock[MessageConnector]
     val entityResolverConnectorMock: EntityResolverConnector = mock[EntityResolverConnector]
 
-    val secureMessageService = new SecureMessageService {
-      override def messageConnector: MessageConnector = messageConnectorMock
-
-      override def entityResolverConnector: EntityResolverConnector = entityResolverConnectorMock
-    }
+    val secureMessageService = new SecureMessageService(messageConnectorMock, entityResolverConnectorMock)
   }
 
 }

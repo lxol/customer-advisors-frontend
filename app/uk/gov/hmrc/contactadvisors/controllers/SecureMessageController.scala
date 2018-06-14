@@ -16,29 +16,27 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.data._
-import play.api.data.Forms._
-import play.api.mvc._
-import uk.gov.hmrc.contactadvisors.domain._
-import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-
-import scala.concurrent.Future
-import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import play.api.data.Forms._
+import play.api.data._
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc._
 import uk.gov.hmrc.contactadvisors.FrontendAuditConnector
+import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
-import uk.gov.hmrc.play.audit.EventKeys
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
-import uk.gov.hmrc.play.config.AppName
+import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.EventKeys
+import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-trait SecureMessageController extends FrontendController with CustomerAdviceAudit {
-
-  val secureMessageService: SecureMessageService
+@Singleton
+class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController {
 
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
@@ -58,8 +56,10 @@ trait SecureMessageController extends FrontendController with CustomerAdviceAudi
       ),
       advice => {
         val result = secureMessageService.createMessage(advice, SaUtr(utr))
-        auditAdvice(result, SaUtr(utr))
-        result.map { handleStorageResult(utr) }
+        customerAdviceAudit.auditAdvice(result, SaUtr(utr))
+        result.map {
+          handleStorageResult(utr)
+        }
       }
     )
   }
@@ -110,11 +110,10 @@ trait SecureMessageController extends FrontendController with CustomerAdviceAudi
   }
 }
 
-trait CustomerAdviceAudit {
+@Singleton
+class CustomerAdviceAudit @Inject()(auditConnector: FrontendAuditConnector) {
 
-  def auditSource: String
-
-  def auditConnector: AuditConnector
+  def auditSource: String = "customer-advisors-frontend"
 
   def auditAdvice(result: Future[StorageResult], taxId: SaUtr)(implicit hc: HeaderCarrier): Unit = {
     def createEvent(messageInfo: Map[String, String], auditType: String, transactionName: String) =
@@ -147,11 +146,3 @@ trait CustomerAdviceAudit {
   }
 }
 
-
-object SecureMessageController extends SecureMessageController {
-  lazy val secureMessageService: SecureMessageService = SecureMessageService
-
-  lazy val auditSource: String = AppName.appName
-
-  lazy val auditConnector: AuditConnector = FrontendAuditConnector
-}
