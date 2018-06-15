@@ -18,10 +18,9 @@ package uk.gov.hmrc.contactadvisors.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages.Implicits._
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import uk.gov.hmrc.contactadvisors.FrontendAuditConnector
 import uk.gov.hmrc.contactadvisors.domain._
@@ -36,8 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
-class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController {
-
+class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService, val messagesApi: MessagesApi)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController with I18nSupport {
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(

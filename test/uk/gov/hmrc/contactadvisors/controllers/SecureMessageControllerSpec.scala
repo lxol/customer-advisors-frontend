@@ -23,6 +23,7 @@ import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.play.OneServerPerSuite
 import play.api.http.Status
+import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -53,7 +54,7 @@ class SecureMessageControllerSpec
   val subject = "This is a response to your HMRC request"
   val adviceBody = "<p>This is the content of the secure message</p>"
 
-  val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
+  val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]), app.injector.instanceOf(classOf[MessagesApi]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
     def auditSource: String = "customer-advisors-frontend"
   }
   "GET /inbox/:utr" should {

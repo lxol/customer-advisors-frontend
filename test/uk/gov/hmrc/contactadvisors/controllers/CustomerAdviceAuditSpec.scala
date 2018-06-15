@@ -22,6 +22,7 @@ import org.mockito.Mockito._
 import org.scalatest.concurrent.{Eventually, IntegrationPatience, ScalaFutures}
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
+import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.domain._
@@ -139,7 +140,9 @@ trait TestCase extends MockitoSugar {
   val auditConnectorMock = mock[FrontendAuditConnector]
   val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
   val appConfig = new FrontendAppConfig(configuration, env)
-  val controller = new SecureMessageController(customerAdviceAudit, secureMessageServiceMock)(appConfig) {
+
+  val messageApi = new DefaultMessagesApi(env, configuration, new DefaultLangs(configuration))
+  val controller = new SecureMessageController(customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
     val secureMessageService: SecureMessageService = secureMessageServiceMock
 
     def auditSource: String = "customer-advisors-frontend"
