@@ -22,12 +22,12 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
-import uk.gov.hmrc.contactadvisors.FrontendAuditConnector
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
@@ -109,7 +109,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 }
 
 @Singleton
-class CustomerAdviceAudit @Inject()(auditConnector: FrontendAuditConnector) {
+class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
 
   def auditSource: String = "customer-advisors-frontend"
 

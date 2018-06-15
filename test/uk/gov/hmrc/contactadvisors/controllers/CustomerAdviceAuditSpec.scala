@@ -25,12 +25,12 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
-import uk.gov.hmrc.contactadvisors.{FrontendAppConfig, FrontendAuditConnector}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
-import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -137,7 +137,7 @@ trait TestCase extends MockitoSugar {
     "Test.google-analytics.token" -> "token",
     "Test.google-analytics.host" -> "host"))
 
-  val auditConnectorMock = mock[FrontendAuditConnector]
+  val auditConnectorMock = mock[AuditConnector]
   val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
   val appConfig = new FrontendAppConfig(configuration, env)
 
