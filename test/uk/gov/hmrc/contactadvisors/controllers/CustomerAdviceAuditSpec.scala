@@ -22,13 +22,16 @@ import org.mockito.Mockito._
 import org.scalatest.concurrent.{Eventually, IntegrationPatience, ScalaFutures}
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
+import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
 import play.api.test.FakeRequest
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -127,17 +130,27 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
 trait TestCase extends MockitoSugar {
 
   val secureMessageServiceMock = mock[SecureMessageService]
-  val auditConnectorMock = mock[AuditConnector]
+  val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
 
-  val controller = new SecureMessageController {
-    override val secureMessageService: SecureMessageService = secureMessageServiceMock
-    override def auditSource: String = "customer-advisors-frontend"
-    override def auditConnector: AuditConnector = auditConnectorMock
+  val env = Environment.simple()
+  val configuration = Configuration.reference ++ Configuration.from(Map(
+    "Test.google-analytics.token" -> "token",
+    "Test.google-analytics.host" -> "host"))
+
+  val auditConnectorMock = mock[AuditConnector]
+  val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
+  val appConfig = new FrontendAppConfig(configuration, env)
+
+  val messageApi = new DefaultMessagesApi(env, configuration, new DefaultLangs(configuration))
+  val controller = new SecureMessageController(customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
+    val secureMessageService: SecureMessageService = secureMessageServiceMock
+
+    def auditSource: String = "customer-advisors-frontend"
   }
   val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
+  implicit val hc = HeaderCarrier
   when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
 
-  implicit val hc = HeaderCarrier
   val request = FakeRequest("POST", "/inbox/123456789").withFormUrlEncodedBody(
     "subject" -> "New message subject",
     "message" -> "New message body"

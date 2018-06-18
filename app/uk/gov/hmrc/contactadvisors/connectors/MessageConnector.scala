@@ -16,23 +16,29 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
+import play.api.{Configuration, Environment}
 import play.mvc.Http.Status
-import uk.gov.hmrc.contactadvisors.WSHttp
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
 import uk.gov.hmrc.contactadvisors.domain._
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpPost, Upstream4xxResponse }
 
 import scala.concurrent.Future
 
-trait MessageConnector {
 
-  def http: HttpPost
+@Singleton
+class MessageConnector @Inject()(http: HttpClient,
+                                 override val runModeConfiguration: Configuration,
+                                 val environment: Environment) extends Status with ServicesConfig {
 
-  def serviceUrl: String
+  lazy val serviceUrl: String = baseUrl("message")
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  override protected def mode = environment.mode
 
   def create(secureMessage: SecureMessage)
             (implicit hc: HeaderCarrier): Future[StorageResult] = {
@@ -41,9 +47,10 @@ trait MessageConnector {
 
     val createMessageAPIurl: String = s"$serviceUrl/messages"
 
+
     http.POST[SecureMessage, MessageResponse](url = createMessageAPIurl, body = secureMessage).
       map {
-          case MessageResponse(messageId) => AdviceStored(messageId)
+        case MessageResponse(messageId) => AdviceStored(messageId)
       }.
       recover {
         case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => AdviceAlreadyExists
@@ -52,15 +59,8 @@ trait MessageConnector {
   }
 }
 
-object MessageConnector extends MessageConnector with ServicesConfig {
-  override def http: HttpPost = WSHttp
-
-  override def serviceUrl: String = baseUrl("message")
-}
-
 case class MessageResponse(id: String)
 
 object MessageResponse {
   implicit val formats = Json.format[MessageResponse]
 }
-

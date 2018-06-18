@@ -23,10 +23,13 @@ import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.play.OneServerPerSuite
 import play.api.http.Status
+import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub}
+import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
@@ -36,12 +39,12 @@ import scala.concurrent.Future
 
 class SecureMessageControllerSpec
   extends UnitSpec
-  with OneServerPerSuite
-  with ScalaFutures
-  with IntegrationPatience
-  with WithWiremock
-  with EntityResolverStub
-  with MessageStub {
+    with OneServerPerSuite
+    with ScalaFutures
+    with IntegrationPatience
+    with WithWiremock
+    with EntityResolverStub
+    with MessageStub {
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
@@ -51,26 +54,29 @@ class SecureMessageControllerSpec
   val subject = "This is a response to your HMRC request"
   val adviceBody = "<p>This is the content of the secure message</p>"
 
+  val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]), app.injector.instanceOf(classOf[MessagesApi]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
+    def auditSource: String = "customer-advisors-frontend"
+  }
   "GET /inbox/:utr" should {
     "return 200" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+      val result = controller.inbox(customer_utr)(getRequest)
       status(result) shouldBe Status.OK
     }
 
     "return HTML" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+      val result = controller.inbox(customer_utr)(getRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
 
     "show main banner" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+      val result = controller.inbox(customer_utr)(getRequest)
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByTag("header").attr("id") shouldBe "global-header"
     }
 
     "have the expected elements on the form" in {
-      val result = SecureMessageController.inbox(customer_utr)(getRequest)
+      val result = controller.inbox(customer_utr)(getRequest)
       status(result) shouldBe 200
 
       val document = Jsoup.parse(contentAsString(result))
@@ -102,7 +108,7 @@ class SecureMessageControllerSpec
 
   "POST /inbox/:utr" should {
     "indicate a bad request when any of the form elements are empty" in {
-      val emptySubject = SecureMessageController.submit(customer_utr)(
+      val emptySubject = controller.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "message" -> "A message success to the customer. lkasdfjas;ldfjk"
         )
@@ -110,7 +116,7 @@ class SecureMessageControllerSpec
       Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
       status(emptySubject) shouldBe BAD_REQUEST
 
-      val emptyMessage = SecureMessageController.submit(customer_utr)(
+      val emptyMessage = controller.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "subject"
         )
@@ -118,7 +124,7 @@ class SecureMessageControllerSpec
       Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
       status(emptyMessage) shouldBe BAD_REQUEST
 
-      val emptyFormFields = SecureMessageController.submit(customer_utr)(FakeRequest())
+      val emptyFormFields = controller.submit(customer_utr)(FakeRequest())
       Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 2
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
@@ -127,7 +133,7 @@ class SecureMessageControllerSpec
       givenEntityResolverReturnsAPaperlessUser(utr.value)
       givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
 
-      val xssMessage = SecureMessageController.submit(utr.value)(
+      val xssMessage = controller.submit(utr.value)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "This is a response to your HMRC request<script>alert('hax')</script>",
           "message" -> "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
@@ -174,38 +180,38 @@ class SecureMessageControllerSpec
 
   "submission result page" should {
     "contain correct message for success" in {
-      SecureMessageController.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice creation successful", utr.value,
         "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
-        )
+      )
     }
     "contain correct message for duplicate" in {
-      SecureMessageController.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Advice already exists", utr.value,
         "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
-        )
+      )
     }
     "contain correct message for unknown taxid" in {
-      SecureMessageController.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unknown UTR", utr.value,
         "The SA-UTR provided is not recognised by the Digital Tax Platform."
-        )
+      )
     }
     "contain correct message for not paperless user" in {
-      SecureMessageController.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "User is not paperless", utr.value,
         s"The customer is not registered for paperless communications."
-        )
+      )
     }
     "contain correct message for unexpected error" in {
-      SecureMessageController.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
         "Unexpected error", utr.value,
         "There is an unexpected problem. There may be an issue with the connection. Please try again."
-        )
+      )
     }
   }
 
-  def submissionOfCompletedForm() = SecureMessageController.submit(utr.value)(
+  def submissionOfCompletedForm() = controller.submit(utr.value)(
     FakeRequest().withFormUrlEncodedBody(
       "subject" -> subject,
       "message" -> adviceBody
@@ -248,5 +254,6 @@ class SecureMessageControllerSpec
 
     }
   }
+
   override val dependenciesPort: Int = 10100
 }

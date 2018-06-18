@@ -18,6 +18,7 @@ package uk.gov.hmrc.contactadvisors.service
 
 import java.util.UUID
 
+import javax.inject.{Inject, Singleton}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import uk.gov.hmrc.contactadvisors.connectors.models._
@@ -28,10 +29,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait SecureMessageService {
-  def messageConnector: MessageConnector
-
-  def entityResolverConnector: EntityResolverConnector
+@Singleton
+class SecureMessageService @Inject()(messageConnector: MessageConnector, entityResolverConnector: EntityResolverConnector) {
 
   def generateExternalRefID = UUID.randomUUID().toString
 
@@ -60,9 +59,3 @@ trait SecureMessageService {
   }
 }
 
-object SecureMessageService extends SecureMessageService {
-
-  override def messageConnector: MessageConnector = MessageConnector
-
-  override def entityResolverConnector: EntityResolverConnector = EntityResolverConnector
-}

@@ -17,26 +17,35 @@
 package uk.gov.hmrc.contactadvisors.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import javax.inject.{ Inject, Singleton }
 import org.scalatest.Inside._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.mock.MockitoSugar._
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.play.OneServerPerSuite
 import play.api.http.Status
 import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.contactadvisors.WSHttp
-import uk.gov.hmrc.contactadvisors.domain.{CustomerIsNotPaperless, TaxIdNotFound, UnexpectedFailure}
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpGet }
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.WithWiremock
 
+@Singleton
+class TestEntityResolverConnector @Inject()(http: HttpClient,
+  override val runModeConfiguration: Configuration,
+  override val environment: Environment) extends EntityResolverConnector(http, runModeConfiguration, environment)  {
+  override lazy val serviceUrl: String = s"http://localhost:8015"
+}
 
 class EntityResolverConnectorSpec extends UnitSpec
-    with OneServerPerSuite
-    with ScalaFutures
-    with WithWiremock
-    with TableDrivenPropertyChecks
-    with IntegrationPatience {
+  with OneServerPerSuite
+  with ScalaFutures
+  with WithWiremock
+  with TableDrivenPropertyChecks
+  with IntegrationPatience {
 
   implicit val hc = HeaderCarrier()
 
@@ -81,17 +90,11 @@ class EntityResolverConnectorSpec extends UnitSpec
   }
 
   trait TestCase {
-    def entityResolverBaseUrl = s"http://localhost:$dependenciesPort"
     def utr = SaUtr("0329u490uwesakdjf")
+
     def pathToPreferences = s"/portal/preferences/sa/$utr"
 
-    def connector = new EntityResolverConnector {
-
-      override def http: HttpGet = WSHttp
-
-      override def serviceUrl: String = entityResolverBaseUrl
-
-    }
+    def connector = app.injector.instanceOf(classOf[TestEntityResolverConnector])
 
     def entityResolverReturns(status: Int, responseBody: Option[JsObject] = None) =
       givenThat(
@@ -102,7 +105,7 @@ class EntityResolverConnectorSpec extends UnitSpec
               aResponse().withStatus(status).withBody(Json.stringify(json))
             }
           )
-        )
+      )
   }
 
 }
