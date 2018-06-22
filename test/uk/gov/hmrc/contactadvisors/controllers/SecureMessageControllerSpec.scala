@@ -109,24 +109,24 @@ class SecureMessageControllerSpec
 
   "GET /inbox/v2" should {
     "return 200" in {
-      val result = controller.inbox_v2()(getRequest)
+      val result = controller.inboxV2()(getRequest)
       status(result) shouldBe Status.OK
     }
 
     "return HTML" in {
-      val result = controller.inbox_v2()(getRequest)
+      val result = controller.inboxV2()(getRequest)
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
     }
 
     "show main banner" in {
-      val result = controller.inbox_v2()(getRequest)
+      val result = controller.inboxV2()(getRequest)
       val document = Jsoup.parse(contentAsString(result))
       document.getElementsByTag("header").attr("id") shouldBe "global-header"
     }
 
     "have the expected elements on the form" in {
-      val result = controller.inbox_v2()(getRequest)
+      val result = controller.inboxV2()(getRequest)
       status(result) shouldBe 200
 
       val document = Jsoup.parse(contentAsString(result))

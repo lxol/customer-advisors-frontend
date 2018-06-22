@@ -47,7 +47,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )
   }
 
-  def inbox_v2 = Action.async { implicit request =>
+  def inboxV2 = Action.async { implicit request =>
     Future.successful(
       Ok(
         uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(

@@ -10,4 +10,4 @@ GET        /inbox/:utr/unexpected               uk.gov.hmrc.contactadvisors.cont
 GET        /inbox/:utr/unknown                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unknown(utr: String)
 GET        /inbox/:utr/not-paperless            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notPaperless(utr: String)
 
-GET        /inbox-v2                            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inbox_v2
+GET        /inbox-v2                            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inboxV2
