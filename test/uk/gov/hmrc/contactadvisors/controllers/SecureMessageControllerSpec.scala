@@ -103,6 +103,95 @@ class SecureMessageControllerSpec
         submitAdvice.map(_.tagName()) shouldBe Some("button")
         submitAdvice.map(_.text()) shouldBe Some("Send")
       }
+
+    }
+  }
+
+  "GET /inbox/v2" should {
+    "return 200" in {
+      val result = controller.inboxV2()(getRequest)
+      status(result) shouldBe Status.OK
+    }
+
+    "return HTML" in {
+      val result = controller.inboxV2()(getRequest)
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+    }
+
+    "show main banner" in {
+      val result = controller.inboxV2()(getRequest)
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+    }
+
+    "have the expected elements on the form" in {
+      val result = controller.inboxV2()(getRequest)
+      status(result) shouldBe 200
+
+      val document = Jsoup.parse(contentAsString(result))
+      val form = document.select("form#form-submit-customer-advice").get(0)
+      val formElements = form.getAllElements.asScala
+
+      val adviceSubject = formElements.find(_.id() == "subject")
+      withClue("advice subject field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
+
+      val adviceMessage = formElements.find(_.id() == "content")
+      withClue("advice message field") {
+        adviceMessage.map(_.tagName()) shouldBe Some("textarea")
+      }
+
+      val submitAdvice = formElements.find(_.id() == "submit-advice")
+      withClue("submit advice button") {
+        submitAdvice.map(_.tagName()) shouldBe Some("button")
+        submitAdvice.map(_.text()) shouldBe Some("Send")
+      }
+
+
+      val recipientTaxIdentifierName = formElements.find(_.id() == "recipient_taxidentifier_name")
+      withClue("advice recipient taxidentifier name field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
+
+      val recipientTaxIdentifierValue = formElements.find(_.id() == "recipient_taxidentifier_value")
+      withClue("advice recipient taxidentifier value field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
+
+      val recipientEmail = formElements.find(_.id() == "recipient_email")
+      withClue("advice recipient email field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
+
+      val recipientNameLine1 = formElements.find(_.id() == "recipient_name_line1")
+      withClue("advice recipient name line1 field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
+
+      val recipientMessageType = formElements.find(_.id() == "messageType")
+      withClue("advice messageType field") {
+        Inside.inside(adviceSubject) {
+          case Some(element) =>
+            element.tagName() shouldBe "input"
+        }
+      }
     }
   }
 
