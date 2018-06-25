@@ -1,7 +1,7 @@
 # microservice specific routes
 
 GET        /inbox/v2                            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inboxV2
-POST       /inbox/:utr             uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
+POST       /inbox/:utr                          uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
 
 GET        /inbox/:utr/success                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.success(utr: String)
 GET        /inbox/:utr/duplicate                uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.duplicate(utr: String)
