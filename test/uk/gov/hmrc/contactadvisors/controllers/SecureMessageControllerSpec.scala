@@ -337,7 +337,7 @@ class SecureMessageControllerSpec
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith(s"/secure-message$url")
+        case Some(redirect) => redirect should (startWith(s"/secure-message$url") or startWith(s"/customer-advisors-frontend$url"))
         case _ => fail("redirect location should always be present")
       }
 
