@@ -40,36 +40,23 @@ class CreateMessageApiISpec extends MessagingISpec  {
       lazy val input = Json.parse(
         s"""
         | {
-        |   "id" : "asdfasdf",
-        |   "recipient" : { "regime" : "sa", "identifier" : { "sautr" : "$ctUtr" } },
-        |   "subject" : "statement",
-        |   "validFrom": "${"%04d-%02d-%02d".format(now.getYear, now.getMonthOfYear, now.getDayOfMonth)}",
-        |   "alertDetails": {
-        |       "alertFrom": "${"%04d-%02d-%02d".format(now.getYear, now.getMonthOfYear, now.getDayOfMonth)}",
-        |       "data": {},
-        |       "templateId": "testAlertTemplate"
-        |    },
-        |   "body": {
-        |      "type": "ats-message-renderer"
-        |   },
-        |   "contentParameters": {
-        |      "data": {},
-        |      "templateId": "ats_v2"
-        |   },
-        |   "hash": "ABCDEFGHIJ",
-        |   "statutory": false,
-        |   "renderUrl": {
-        |      "service": "ats-message-renderer",
-        |      "url": "/ats-message-renderer/message/{messageId}"
-        |   }
+        |   "message" : "test message content",
+        |   "subject" : "statement"
         | }
      """.stripMargin).as[JsObject] 
-      val messageCreationResponse: WSResponse = `/inbox`.post(input).futureValue
+      val messageCreationResponse = `/inbox`.post(input)
+      messageCreationResponse.status shouldBe OK
+      // val messageCreationResponse1 = `/inboxget`.get()
+      //messageCreationResponse1.status shouldBe OK
+
+
+
+
       // val messageId: String = (messageCreationResponse.json \ "id").as[String]
       // val messageResponse: WSResponse = getMessageBy(messageId, authorisedTokenFor(utr)).futureValue
       // val messageJson: JsValue = messageResponse.json
 
-      messageCreationResponse.status shouldBe CREATED
+      // messageCreationResponse.status shouldBe CREATED
       // messageResponse.status shouldBe OK
       // (messageResponse.json \ "id").as[String] shouldBe messageId
       // (messageResponse.json \ "subject").as[String] shouldBe (messageJson \ "subject").as[String]
@@ -124,7 +111,7 @@ class CustomerAdvisorsIntegrationServer(override val testName: String,
     runFromJar(_)) ++ servicesFromSource.map(ExternalServiceRunner.runFromSource(_))
 
   override protected val additionalConfig:Map[String, Any] = Map(
-    "Dev.microservice.services.message.port" -> servicePort,
+    "Dev.microservice.services.customer-advisors-frontend.port" -> servicePort,
     "Dev.scheduling.sendAlerts.initialDelay" -> "1 day", // Deliberate - effectively disabled
     "Dev.scheduling.processNotifications.initialDelay" -> "1 day", // Deliberate - effectively disabled
     "Dev.messages.delayMessageProcessing" -> "false", // Deliberate - effectively disabled
@@ -153,19 +140,10 @@ object CustomerAdvisorsIntegrationServer {
   val Message = "message"
 
   val allExternalServices = Seq(
-    // Auth,
-    // AuthLoginApi,
-    // UserDetails,
     Preferences,
     EntityResolver,
-    // Email,
-    // Mailgun,
-    // HmrcDeskPro,
-    // ExternalDeskPro,
-    // Taxpaye,
     SA,
     Datastream,
-    // HmrcEmailRenderer,
     Message
   )
 
@@ -177,12 +155,7 @@ object CustomerAdvisorsIntegrationServer {
 abstract class MessagingISpec(
   customMessagingServer: Option[CustomerAdvisorsIntegrationServer] = None
 ) extends UnitSpec
-    // with IntegrationPatience
     with ScalaFutures
-    // with MessageRepositoryForIntegrationTest
-    // with ResponseMatchers
-    // with SaIntegrationPatience
-    // with AuthHelper
     with BeforeAndAfterAll
     with Eventually {
 
@@ -194,6 +167,7 @@ abstract class MessagingISpec(
   override def beforeAll(): Unit = {
     super.beforeAll()
     if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
+      println(s"******* INTEGRATION SERVER START")
       server.start()
     }
   }
@@ -201,6 +175,7 @@ abstract class MessagingISpec(
   override def afterAll(): Unit = {
     super.afterAll()
     if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
+      println(s"******* INTEGRATION SERVER STOP")
       server.stop()
     }
   }
@@ -209,9 +184,9 @@ abstract class MessagingISpec(
 
   implicit lazy val httpClient = WS.client
 
-  def authResource(path: String) = server.externalResource("auth-login-api", path)
+  // def authResource(path: String) = server.externalResource("auth-login-api", path)
 
-  def processEmailQueueNow() = WS.url(server.externalResource("email", "test-only/hmrc/email-admin/process-email-queue")).post("")
+  // def processEmailQueueNow() = WS.url(server.externalResource("email", "test-only/hmrc/email-admin/process-email-queue")).post("")
 
   // protected def extractErrorResponse(request: => Future[HttpResponse], expectedStatusCode: Int, expectedErrorMessage: Option[String]): HttpResponse = {
 
@@ -236,24 +211,24 @@ abstract class MessagingISpec(
   //   response
   // }
 
-  protected def verifyStatusCodeOnly(request: => Future[HttpResponse], expectedStatus: Int)(implicit timeout: scala.concurrent.duration.Duration): HttpResponse = {
-    val response = await(request)(timeout)
+  // protected def verifyStatusCodeOnly(request: => Future[HttpResponse], expectedStatus: Int)(implicit timeout: scala.concurrent.duration.Duration): HttpResponse = {
+  //   val response = await(request)(timeout)
 
-    withClue(s"Response body: ${response.body} - ") {
-      response.status shouldBe expectedStatus
-    }
+  //   withClue(s"Response body: ${response.body} - ") {
+  //     response.status shouldBe expectedStatus
+  //   }
 
-    response
-  }
+  //   response
+  // }
 
-  protected def verifyStatusCodeWithPayload(request: => Future[HttpResponse], expectedStatus: Int, expectedPayload: JsValue) {
-    val response = await(request)
+  // protected def verifyStatusCodeWithPayload(request: => Future[HttpResponse], expectedStatus: Int, expectedPayload: JsValue) {
+  //   val response = await(request)
 
-    withClue(s"Response body: ${response.body} - ") {
-      response.status shouldBe expectedStatus
-      Json.parse(response.body) shouldBe expectedPayload
-    }
-  }
+  //   withClue(s"Response body: ${response.body} - ") {
+  //     response.status shouldBe expectedStatus
+  //     Json.parse(response.body) shouldBe expectedPayload
+  //   }
+  // }
 
   // def clearNotifications() {
   //   WS.url(server.externalResource("notification", "/admin/notifications")).delete() should have(status(200))
@@ -263,80 +238,97 @@ abstract class MessagingISpec(
   //   WS.url(server.externalResource("preferences", "/preferences-admin/sa/individual/print-suppression")).delete() should have(status(200))
   // }
 
-  final case class TaxIdBody(idType: String, id: String)
-  object TaxIdBody {
-    implicit val format = Json.format[TaxIdBody]
-  }
+  // final case class TaxIdBody(idType: String, id: String)
+  // object TaxIdBody {
+  //   implicit val format = Json.format[TaxIdBody]
+  // }
 
-  final case class CustomerAdviceRequest(taxId: TaxIdBody, adviceBody: String)
-  object CustomerAdviceRequest {
-    implicit val format = Json.format[CustomerAdviceRequest]
-  }
+  // final case class CustomerAdviceRequest(taxId: TaxIdBody, adviceBody: String)
+  // object CustomerAdviceRequest {
+  //   implicit val format = Json.format[CustomerAdviceRequest]
+  // }
 
-  def `/message/system/process-event/:id`(id: String) = new {
-    def post(body: JsValue) = WS.url(resource(s"/message/system/process-event/$id")).post(body)
-  }
+  // def `/message/system/process-event/:id`(id: String) = new {
+  //   def post(body: JsValue) = WS.url(resource(s"/message/system/process-event/$id")).post(body)
+  // }
 
-  def `/message/system/:id/send-alert`(id: String) = new {
-    def get = WS.url(resource(s"/message/system/$id/send-alert")).get()
-  }
+  // def `/message/system/:id/send-alert`(id: String) = new {
+  //   def get = WS.url(resource(s"/message/system/$id/send-alert")).get()
+  // }
 
-  def  `/admin/message/re-queue` = new {
-    def post(messageIds: String*) = WS.url(resource(s"/admin/message/re-queue")).post(Json.toJson(messageIds))
-  }
+  // def  `/admin/message/re-queue` = new {
+  //   def post(messageIds: String*) = WS.url(resource(s"/admin/message/re-queue")).post(Json.toJson(messageIds))
+  // }
 
-  def `/admin/message/add-rescindment` = new {
-    def post(messageIds: String*) = WS.url(resource(s"/admin/message/add-rescindment")).post(Json.toJson(messageIds))
-  }
+  // def `/admin/message/add-rescindment` = new {
+  //   def post(messageIds: String*) = WS.url(resource(s"/admin/message/add-rescindment")).post(Json.toJson(messageIds))
+  // }
 
-  def `/admin/message/add-extra-alert` = new {
-    def post(body: JsValue) = WS.url(resource(s"/admin/message/add-extra-alert")).post(body)
-  }
+  // def `/admin/message/add-extra-alert` = new {
+  //   def post(body: JsValue) = WS.url(resource(s"/admin/message/add-extra-alert")).post(body)
+  // }
 
-  def `/v1/messages` =  new {
-    def post(body: JsValue) =  WS.url(resource(s"/v1/messages")).post(body)
-  }
+  // def `/v1/messages` =  new {
+  //   def post(body: JsValue) =  WS.url(resource(s"/v1/messages")).post(body)
+  // }
 
-  def `/v2/messages` = new {
-    def post(body: JsValue) =  WS.url(resource(s"/v2/messages")).post(body)
-  }
+  // def `/v2/messages` = new {
+  //   def post(body: JsValue) =  WS.url(resource(s"/v2/messages")).post(body)
+  // }
 
   def `/inbox` = new {
-    def post(body: JsValue) =  WS.url(resource(s"/secure-message/inbox")).post(body)
+    def post(body: JsValue) =  {
+      println(s"****** inbox POST: ${body}")
+      val p = resource(s"secure-message/inbox/1234567890")
+      println(s"******* path: ${p}")
+      //WS.url(resource(s"/secure-message/inbox")).post(body)
+      util.FakeRequestBuilder(p).post(body)
+      // WS.url(p).post(body)
+    }
   }
 
-  def getMessageFromUrl(url:String) = WS.url(resource(url)).get()
-
-  def getAllMessagesFor(
-    authorisationToken: Future[String],
-    countOnly: Boolean
-  ): Future[WSResponse] = {
-    WS.url(resource(s"/messages?countOnly=$countOnly")).
-      withHeaders(("authorization", authorisationToken)).
-      get()
+  def `/inboxget` = new {
+    def get() =  {
+      println(s"****** inbox GET: ")
+      val p = resource(s"secure-message/inbox/1234567890")
+      println(s"******* path: ${p}")
+      // WS.url(resource(s"/secure-message/inbox")).post(body)
+      // util.FakeRequestBuilder(p).get()
+      WS.url(p).get()
+    }
   }
+  // def getMessageFromUrl(url:String) = WS.url(resource(url)).get()
 
-  def getAllFilteredMessagesFor(
-    authorisationToken: Future[String],
-    countOnly: Boolean, taxIdentifiers: List[String]
-  ): Future[WSResponse] = {
-    val tIds = taxIdentifiers.fold("")((a,b) => a + s"&taxIdentifiers=$b")
-    WS.url(resource(s"/messages?countOnly=$countOnly$tIds")).
-      withHeaders(("authorization", authorisationToken)).
-      get()
-  }
+  // def getAllMessagesFor(
+  //   authorisationToken: Future[String],
+  //   countOnly: Boolean
+  // ): Future[WSResponse] = {
+  //   WS.url(resource(s"/messages?countOnly=$countOnly")).
+  //     withHeaders(("authorization", authorisationToken)).
+  //     get()
+  // }
 
-  def getMessageBy(id: String, authorisationToken: Future[String]) = {
-    WS.url(resource(s"/messages/$id")).
-      withHeaders(("authorization", authorisationToken)).
-      get()
-  }
+  // def getAllFilteredMessagesFor(
+  //   authorisationToken: Future[String],
+  //   countOnly: Boolean, taxIdentifiers: List[String]
+  // ): Future[WSResponse] = {
+  //   val tIds = taxIdentifiers.fold("")((a,b) => a + s"&taxIdentifiers=$b")
+  //   WS.url(resource(s"/messages?countOnly=$countOnly$tIds")).
+  //     withHeaders(("authorization", authorisationToken)).
+  //     get()
+  // }
 
-  def getContentBy(id: String, authorisationToken: Future[String]) = {
-    WS.url(resource(s"/messages/$id/content")).
-      withHeaders(("authorization", authorisationToken)).
-      get()
-  }
+  // def getMessageBy(id: String, authorisationToken: Future[String]) = {
+  //   WS.url(resource(s"/messages/$id")).
+  //     withHeaders(("authorization", authorisationToken)).
+  //     get()
+  // }
+
+  // def getContentBy(id: String, authorisationToken: Future[String]) = {
+  //   WS.url(resource(s"/messages/$id/content")).
+  //     withHeaders(("authorization", authorisationToken)).
+  //     get()
+  // }
 
   // def updateReadTimeFor(taxId: TaxIdWithName, messageId: BSONObjectID, authorisationToken: Future[String]): Future[WSResponse] =
   //   WS.url(resource(s"/messages/${messageId.stringify}/read-time")).

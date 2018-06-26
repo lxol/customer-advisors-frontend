@@ -36,18 +36,22 @@ import scala.concurrent.Future
 
 @Singleton
 class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService, val messagesApi: MessagesApi)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController with I18nSupport {
-  def inbox(utr: String) = Action.async { implicit request =>
-    Future.successful(
-      Ok(
-        uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(
-          utr,
-          adviceForm.fill(Advice("Response to your enquiry from HMRC customer services", ""))
+  def inbox(utr: String) = {
+    Logger.info(s"******* LOGGER INBOX : ${utr}")
+    // println(s"println ******* LOGGER utr: ${utr}")
+    Action.async { implicit request =>
+      Future.successful(
+        Ok(
+          uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(
+            utr,
+            adviceForm.fill(Advice("Response to your enquiry from HMRC customer services", ""))
+          )
         )
       )
-    )
+    }
   }
 
-  def inboxV2 = Action.async { implicit request =>
+  def inboxV2 = {Action.async { implicit request =>
     Future.successful(
       Ok(
         uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(
@@ -56,7 +60,11 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
       )
     )
   }
-  def submit(utr: String) = Action.async { implicit request =>
+  }
+  def submit(utr: String) = {
+    Logger.info(s"******* SUBMIT LOGGER utr: ")
+    println(s"println ******* SUBMIT LOGGER utr: ")
+    Action.async { implicit request =>
     adviceForm.bindFromRequest.fold(
       formWithErrors => Future.successful(
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
@@ -70,12 +78,23 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
       }
     )
   }
+  }
 
   def success(utr: String) = Action.async { implicit request =>
     Future.successful(
-      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.success(utr))
+      // Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.success(utr))
+      Ok("")
     )
   }
+
+  // def submit(utr: String) = {
+  //    Logger.info(s"******* SUBMIT NEWNEW LOGGER utr: ")
+  //   Action.async { implicit request =>
+  //   Future.successful(
+  //     Ok("")
+  //   )
+  // }
+  // }
 
   def duplicate(utr: String) = Action.async { implicit request =>
     Future.successful(
