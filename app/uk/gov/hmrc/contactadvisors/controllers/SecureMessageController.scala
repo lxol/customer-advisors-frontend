@@ -36,36 +36,27 @@ import scala.concurrent.Future
 
 @Singleton
 class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService, val messagesApi: MessagesApi)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController with I18nSupport {
-  def inbox(utr: String) = Action.async { implicit request =>
+
+  def inbox = Action.async { implicit request =>
     Future.successful(
       Ok(
         uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(
-          utr,
-          adviceForm.fill(Advice("Response to your enquiry from HMRC customer services", ""))
-        )
-      )
-    )
-  }
-
-  def inboxV2 = Action.async { implicit request =>
-    Future.successful(
-      Ok(
-        uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(
           adviceForm.fill(Advice("", ""))
         )
       )
     )
   }
-  def submit(utr: String) = Action.async { implicit request =>
+
+  def submit() = Action.async { implicit request =>
     adviceForm.bindFromRequest.fold(
       formWithErrors => Future.successful(
-        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(formWithErrors))
       ),
       advice => {
-        val result = secureMessageService.createMessage(advice, SaUtr(utr))
-        customerAdviceAudit.auditAdvice(result, SaUtr(utr))
+        val result = secureMessageService.createMessage(advice, SaUtr("foo utr"))
+        customerAdviceAudit.auditAdvice(result, SaUtr("foo utr"))
         result.map {
-          handleStorageResult(utr)
+          handleStorageResult("foo utr")
         }
       }
     )
