@@ -107,7 +107,7 @@ class SecureMessageControllerSpec
     }
   }
 
-  "GET /inbox/v2" should {
+  "GET /customer-advisors-frontend/inbox" should {
     "return 200" in {
       val result = controller.inboxV2()(getRequest)
       status(result) shouldBe Status.OK
