@@ -62,6 +62,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
       advice => {
+        Logger.info("****** AdviceV2: ${advice} ", err)
         val result = secureMessageService.createMessage(advice, SaUtr(utr))
         customerAdviceAudit.auditAdvice(result, SaUtr(utr))
         result.map {
@@ -71,6 +72,20 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )
   }
 
+  def submitV2(utr: String) = Action.async { implicit request =>
+    adviceForm.bindFromRequest.fold(
+      formWithErrors => Future.successful(
+        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+      ),
+      advice => {
+        val result = secureMessageService.createMessage(advice, SaUtr(utr))
+        customerAdviceAudit.auditAdvice(result, SaUtr(utr))
+        result.map {
+          handleStorageResult(utr)
+        }
+      }
+    )
+  }
   def success(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.success(utr))
