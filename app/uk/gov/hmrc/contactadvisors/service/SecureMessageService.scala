@@ -57,5 +57,21 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
     val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
     SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
   }
-}
 
+  def createMessageV2(advice: AdviceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
+    messageConnector.create(secureMessageFromV2(advice))
+  }
+  
+
+  def secureMessageFromV2(advice: AdviceV2): SecureMessage = {
+    // val recipient = Recipient("123456")
+    val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
+    val messageType = "advisor-reply"
+    val subject = advice.subject
+    val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
+    val validFrom = DateTime.now().toLocalDate
+    val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
+    SecureMessage(null, externalReference, messageType, subject, content, validFrom, details)
+  }
+
+}

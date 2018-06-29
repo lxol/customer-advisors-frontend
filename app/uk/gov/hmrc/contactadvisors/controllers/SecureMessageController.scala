@@ -62,7 +62,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
         BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
       advice => {
-        Logger.info("****** AdviceV2: ${advice} ", err)
+        // Logger.info("****** AdviceV2: ${advice} ", err)
         val result = secureMessageService.createMessage(advice, SaUtr(utr))
         customerAdviceAudit.auditAdvice(result, SaUtr(utr))
         result.map {
@@ -72,19 +72,29 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )
   }
 
-  def submitV2(utr: String) = Action.async { implicit request =>
-    adviceForm.bindFromRequest.fold(
+  def submitV2() = {
+
+        Logger.info("****** SUBMITV2: ")
+    Action.async { implicit request =>
+    adviceFormV2.bindFromRequest.fold(
       formWithErrors => Future.successful(
-        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+        {
+          Logger.info(s"****** formWithErrors: ${formWithErrors}")
+          BadRequest("foobar")
+          // BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+        }
       ),
       advice => {
-        val result = secureMessageService.createMessage(advice, SaUtr(utr))
-        customerAdviceAudit.auditAdvice(result, SaUtr(utr))
+
+        Logger.info(s"****** AdviceV2: ${advice} ")
+        val result = secureMessageService.createMessageV2(advice)
+        // customerAdviceAudit.auditAdvice(result)
         result.map {
-          handleStorageResult(utr)
+          handleStorageResultV2()
         }
       }
     )
+  }
   }
   def success(utr: String) = Action.async { implicit request =>
     Future.successful(
@@ -123,7 +133,27 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )(Advice.apply)(Advice.unapply)
   )
 
+  def adviceFormV2 = Form[AdviceV2](
+    mapping(
+      "subject" -> nonEmptyText,
+      "content" -> nonEmptyText,
+      "recipientTaxidentifierName" -> nonEmptyText,
+      "recipientTaxidentifierValue" -> nonEmptyText,
+      "recipientEmail"  -> nonEmptyText,
+      "recipientNameLine1" -> nonEmptyText,
+      "messageType" -> nonEmptyText
+    )(AdviceV2.apply)(AdviceV2. unapply)
+  )
+
   private def handleStorageResult(utr: String): StorageResult => Result = {
+    case AdviceStored(_) => Redirect(routes.SecureMessageController.success(utr))
+    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
+    case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
+    case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
+    case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
+  }
+
+  private def handleStorageResultV2(utr: String = "12345"): StorageResult => Result = {
     case AdviceStored(_) => Redirect(routes.SecureMessageController.success(utr))
     case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
     case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
@@ -167,4 +197,3 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
     }
   }
 }
-

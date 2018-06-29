@@ -49,12 +49,20 @@ class CreateMessageApiISpec extends UnitSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit lazy val app = play.api.Play.current
 
-  "Adding a message" should {
-    val now = LocalDate.now
-    "POST addhoc test" in {
+  // "Adding a message" should {
+  //   val now = LocalDate.now
+  //   "POST addhoc test" in {
 
-      val p = resource(s"secure-message/inbox/12367890?message=foomessage2&subject=mysubject")
-      val response = WS.url(p ).post("")
+  //     val p = resource(s"secure-message/inbox/12367890?message=foomessage2&subject=mysubject")
+  //     val response = WS.url(p ).post("")
+  //     response.status shouldBe OK
+  //   }
+  // }
+
+  "Adding a message using v2 API" should {
+    "" in {
+      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=foomessage2&subject=mysubject&recipientTaxidentifierName=rName&recipientTaxidentifierValue=tValue&recipientEmail=rEmail&recipientNameLine1=rLine1&messageType=mType")
+     val response = WS.url(p ).post("")
       response.status shouldBe OK
     }
   }

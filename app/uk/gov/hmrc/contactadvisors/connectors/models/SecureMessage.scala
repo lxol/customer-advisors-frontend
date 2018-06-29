@@ -20,11 +20,17 @@ import org.joda.time.LocalDate
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import uk.gov.hmrc.domain.SaUtr
+import play.api.libs.json.JsPath
+import uk.gov.hmrc.domain.TaxIds.TaxIdWithName
+
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 final case class Details(formId: String, statutory: Boolean, paperSent: Boolean, batchId: Option[String])
 object Details {
   implicit val formats = Json.format[Details]
 }
+
 
 final case class ExternalReference(id: String, source: String)
 object ExternalReference {
@@ -42,7 +48,21 @@ object Recipient {
   implicit val formats = Json.format[Recipient]
 }
 
-case class SecureMessage(recipient: Recipient, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
+case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 object SecureMessage {
   implicit val formats = Json.format[SecureMessage]
+}
+
+
+case class RecipientV2(taxIdentifier: TaxIdWithName, name: Option[TaxpayerName], email: Option[String] = None)
+
+case class TaxpayerName(line1: Option[String] = None) 
+
+object TaxpayerName {
+  implicit val writes = Json.writes[TaxpayerName]
+}
+
+final case class ExternalReferenceV2(id: String, source: String = "sees")
+object ExternalReferenceV2 {
+  implicit val formats = Json.format[ExternalReferenceV2]
 }
