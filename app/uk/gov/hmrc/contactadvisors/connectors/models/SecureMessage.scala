@@ -21,8 +21,9 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
 import uk.gov.hmrc.domain.SaUtr
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.domain.TaxIds.TaxIdWithName
+//import uk.gov.hmrc.domain.TaxIds.TaxIdWithN ame
 
+import play.api.libs.json.{Json, OFormat}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -47,22 +48,38 @@ object Recipient {
 
   implicit val formats = Json.format[Recipient]
 }
+ 
+case class SecureMessage(recipient: Recipient, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 
-case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 object SecureMessage {
   implicit val formats = Json.format[SecureMessage]
 }
 
 
-case class RecipientV2(taxIdentifier: TaxIdWithName, name: Option[TaxpayerName], email: Option[String] = None)
 
-case class TaxpayerName(line1: Option[String] = None) 
+case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 
+final case class RecipientV2(taxIdentifier: SaUtr, name: TaxpayerName, email: String )
+// case class RecipientV2(taxIdentifier: TaxIdWithName, name: Option[TaxpayerName], email: Option[String] = None)
+object RecipientV2 {
+  // implicit val taxIdWrites: Format[SaUtr] = (
+  //   (__ \ "name").format[String] and
+  //     (__ \ "value").format[String]
+  //   ) ( (_, value) => SaUtr(value) , (m => (m.name, m.value)))
+
+  implicit val taxpayerFormat = Json.format[TaxpayerName]
+  implicit val formats:OFormat[RecipientV2] = Json.format[RecipientV2]
+}
+case class TaxpayerName(line1: String) 
 object TaxpayerName {
-  implicit val writes = Json.writes[TaxpayerName]
 }
 
 final case class ExternalReferenceV2(id: String, source: String = "sees")
 object ExternalReferenceV2 {
   implicit val formats = Json.format[ExternalReferenceV2]
 }
+
+object SecureMessageV2 {
+  implicit val formats = Json.format[SecureMessageV2]
+}
+

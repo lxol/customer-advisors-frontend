@@ -21,6 +21,7 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
+import play.api.libs.json.{ JsObject, Json }
 import uk.gov.hmrc.contactadvisors.connectors.models._
 import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
 import uk.gov.hmrc.contactadvisors.domain._
@@ -59,19 +60,54 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
   }
 
   def createMessageV2(advice: AdviceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
-    messageConnector.create(secureMessageFromV2(advice))
+    messageConnector.createV2(secureMessageFromV2(advice))
   }
   
 
-  def secureMessageFromV2(advice: AdviceV2): SecureMessage = {
-    // val recipient = Recipient("123456")
-    val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
+  def secureMessageFromV2(advice: AdviceV2): JsObject = {
+    val taxpayerName = TaxpayerName(advice.recipientNameLine1)
+    // val taxIdentifier = 
+    // val recipient = RecipientV2("123456")
+
+    // val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
+    val externalReference = generateExternalRefID
     val messageType = "advisor-reply"
     val subject = advice.subject
     val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
     val validFrom = DateTime.now().toLocalDate
     val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
-    SecureMessage(null, externalReference, messageType, subject, content, validFrom, details)
+    // SecureMessageV2(null, externalReference, messageType, subject, content, validFrom, details)
+
+    val jsonString =
+      s"""
+         | {
+         |   "externalRef":{
+         |      "id":"${externalReference}",
+         |      "source":"customer-advisor"
+         |   },
+         |   "recipient":{
+         |      "taxIdentifier": {
+         |         "name":"HMRC-ORG-OBTDS",
+         |         "value":"${advice.recipientTaxidentifierValue}"
+         |      },
+         |      "name": {
+         |         "line1": "${advice.recipientNameLine1}"
+         |      },
+         |      "email": "${advice.recipientEmail}"
+         |   },
+         |   "messageType":"$messageType",
+         |   "validFrom": "${validFrom}",
+         |   "subject":"$subject",
+         |   "content":"$content",
+         |   "details":{
+         |      "formId":"CA001",
+         |      "statutory":false,
+         |      "paperSent": false
+         |   }
+         |}
+    """.stripMargin
+
+    Json.parse(jsonString).as[JsObject]
   }
 
 }

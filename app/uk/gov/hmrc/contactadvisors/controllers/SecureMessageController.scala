@@ -88,7 +88,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 
         Logger.info(s"****** AdviceV2: ${advice} ")
         val result = secureMessageService.createMessageV2(advice)
-        // customerAdviceAudit.auditAdvice(result)
+        //customerAdviceAudit.auditAdvice(result)
         result.map {
           handleStorageResultV2()
         }
