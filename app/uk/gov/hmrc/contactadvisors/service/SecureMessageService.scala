@@ -64,50 +64,49 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
   }
   
 
-  def secureMessageFromV2(advice: AdviceV2): JsObject = {
+  def secureMessageFromV2(advice: AdviceV2): SecureMessageV2 = {
     val taxpayerName = TaxpayerName(advice.recipientNameLine1)
-    // val taxIdentifier = 
-    // val recipient = RecipientV2("123456")
-
-    // val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
-    val externalReference = generateExternalRefID
-    val messageType = "advisor-reply"
+    val taxIdentifier = FHDDSTaxIdentifier(advice.recipientTaxidentifierValue, "sautr")
+    val recipient = RecipientV2(taxIdentifier, taxpayerName, advice.recipientEmail)
+    val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
+    val messageType = "fhddsAlertMessage"
     val subject = advice.subject
     val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
     val validFrom = DateTime.now().toLocalDate
     val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
-    // SecureMessageV2(null, externalReference, messageType, subject, content, validFrom, details)
 
-    val jsonString =
-      s"""
-         | {
-         |   "externalRef":{
-         |      "id":"${externalReference}",
-         |      "source":"customer-advisor"
-         |   },
-         |   "recipient":{
-         |      "taxIdentifier": {
-         |         "name":"HMRC-ORG-OBTDS",
-         |         "value":"${advice.recipientTaxidentifierValue}"
-         |      },
-         |      "name": {
-         |         "line1": "${advice.recipientNameLine1}"
-         |      },
-         |      "email": "${advice.recipientEmail}"
-         |   },
-         |   "messageType":"$messageType",
-         |   "validFrom": "${validFrom}",
-         |   "subject":"$subject",
-         |   "content":"$content",
-         |   "details":{
-         |      "formId":"CA001",
-         |      "statutory":false,
-         |      "paperSent": false
-         |   }
-         |}
-    """.stripMargin
+    // val jsonString =
+    //   s"""
+    //      | {
+    //      |   "externalRef":{
+    //      |      "id":"${externalReference}",
+    //      |      "source":"customer-advisor"
+    //      |   },
+    //      |   "recipient":{
+    //      |      "taxIdentifier": {
+    //      |         "name":"sautr",
+    //      |         "value":"${advice.recipientTaxidentifierValue}"
+    //      |      },
+    //      |      "name": {
+    //      |         "line1": "${advice.recipientNameLine1}"
+    //      |      },
+    //      |      "email": "${advice.recipientEmail}"
+    //      |   },
+    //      |   "messageType":"$messageType",
+    //      |   "validFrom": "${validFrom}",
+    //      |   "subject":"$subject",
+    //      |   "content":"$content",
+    //      |   "details":{
+    //      |      "formId":"CA001",
+    //      |      "statutory":false,
+    //      |      "paperSent": false
+    //      |   }
+    //      |}
+    // """.stripMargin
 
-    Json.parse(jsonString).as[JsObject]
+    // Json.parse(jsonString).as[JsObject] // 
+ 
+    SecureMessageV2(recipient, externalReference, messageType, subject, content, validFrom, details)
   }
 
 }

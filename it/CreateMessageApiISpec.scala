@@ -1,4 +1,5 @@
 import java.util.UUID
+import org.joda.time.DateTime
 import org.scalatest.DoNotDiscover
 
 import org.scalatest.concurrent.ScalaFutures
@@ -6,6 +7,7 @@ import play.api.http.Status._
 import play.api.libs.json.{ JsObject, JsValue, Json }
 import play.api.libs.ws.{WS, WSResponse}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.contactadvisors.connectors.MessageResponse
 import uk.gov.hmrc.domain._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -60,10 +62,23 @@ class CreateMessageApiISpec extends UnitSpec
   // }
 
   "Adding a message using v2 API" should {
-    "" in {
-      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=foomessage2&subject=mysubject&recipientTaxidentifierName=rName&recipientTaxidentifierValue=tValue&recipientEmail=rEmail&recipientNameLine1=rLine1&messageType=mType")
+    "create a message" in {
+
+      val content = DateTime.now().toString
+      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=tValue&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
      val response = WS.url(p ).post("")
       response.status shouldBe OK
+      val res = response.futureValue
+      // response. map {
+      //   case MessageResponse(messageId) => AdviceStored(messageId)
+      // }.
+      // recover {
+      //   case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => AdviceAlreadyExists
+      //   case ex => UnexpectedError(ex.getMessage)
+      // }
+      println(s"****** response: ${res.body}")
+      // val messageId: String = (res.json \ "id").as[String]
+      // val messageId: String = (response.json \ "sdfsdf").as[String]
     }
   }
 }

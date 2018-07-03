@@ -19,7 +19,7 @@ package uk.gov.hmrc.contactadvisors.connectors.models
 import org.joda.time.LocalDate
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, _}
-import uk.gov.hmrc.domain.SaUtr
+import uk.gov.hmrc.domain.{ SaUtr, SimpleName, TaxIdentifier }
 import play.api.libs.json.JsPath
 //import uk.gov.hmrc.domain.TaxIds.TaxIdWithN ame
 
@@ -59,7 +59,8 @@ object SecureMessage {
 
 case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 
-final case class RecipientV2(taxIdentifier: SaUtr, name: TaxpayerName, email: String )
+case class FHDDSTaxIdentifier(value: String, name: String) 
+final case class RecipientV2(taxIdentifier: FHDDSTaxIdentifier, name: TaxpayerName, email: String )
 // case class RecipientV2(taxIdentifier: TaxIdWithName, name: Option[TaxpayerName], email: Option[String] = None)
 object RecipientV2 {
   // implicit val taxIdWrites: Format[SaUtr] = (
@@ -67,6 +68,7 @@ object RecipientV2 {
   //     (__ \ "value").format[String]
   //   ) ( (_, value) => SaUtr(value) , (m => (m.name, m.value)))
 
+  implicit val fhddsTaxIdformats:OFormat[FHDDSTaxIdentifier] = Json.format[FHDDSTaxIdentifier]
   implicit val taxpayerFormat = Json.format[TaxpayerName]
   implicit val formats:OFormat[RecipientV2] = Json.format[RecipientV2]
 }

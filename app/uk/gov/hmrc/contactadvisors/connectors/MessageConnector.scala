@@ -58,7 +58,7 @@ class MessageConnector @Inject()(http: HttpClient,
       }
   }
 
-  def createV2(secureMessage: JsObject)
+  def createV2(secureMessage: SecureMessageV2)
             (implicit hc: HeaderCarrier): Future[StorageResult] = {
 
     implicit val messageFormats = MessageResponse.formats
@@ -66,7 +66,7 @@ class MessageConnector @Inject()(http: HttpClient,
     val createMessageAPIurl: String = s"$serviceUrl/messages"
 
 
-    http.POST[JsObject, MessageResponse](url = createMessageAPIurl, body = secureMessage).
+    http.POST[SecureMessageV2, MessageResponse](url = createMessageAPIurl, body = secureMessage).
       map {
         case MessageResponse(messageId) => AdviceStored(messageId)
       }.

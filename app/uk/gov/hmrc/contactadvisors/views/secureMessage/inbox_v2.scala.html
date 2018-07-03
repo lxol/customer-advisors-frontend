@@ -17,13 +17,13 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import play.api.mvc._
 
-@import uk.gov.hmrc.contactadvisors.domain.Advice
-@(adviceForm: Form[Advice])(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig )
+@import uk.gov.hmrc.contactadvisors.domain.AdviceV2
+@(adviceForm: Form[AdviceV2])(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig )
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Contact Advisor Response Form V2", bodyClasses = None) {
     <h2>Please complete and submit the form below in order to reply to </h2>
 
-    @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submit("asdfasdf"), 'id -> "form-submit-customer-advice") {
+    @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submitV2(), 'id -> "form-submit-customer-advice") {
         <fieldset>
             <div class="form-field">
             @textArea(

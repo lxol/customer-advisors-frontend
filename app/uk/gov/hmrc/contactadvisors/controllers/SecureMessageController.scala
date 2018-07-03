@@ -51,7 +51,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     Future.successful(
       Ok(
         uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(
-          adviceForm.fill(Advice("", ""))
+          adviceFormV2.fill(AdviceV2("", "", "", "", "", "", ""))
         )
       )
     )
