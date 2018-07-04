@@ -51,16 +51,6 @@ class CreateMessageApiISpec extends UnitSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit lazy val app = play.api.Play.current
 
-  // "Adding a message" should {
-  //   val now = LocalDate.now
-  //   "POST addhoc test" in {
-
-  //     val p = resource(s"secure-message/inbox/12367890?message=foomessage2&subject=mysubject")
-  //     val response = WS.url(p ).post("")
-  //     response.status shouldBe OK
-  //   }
-  // }
-
   "Adding a message using v2 API" should {
     "create a message" in {
 
@@ -68,17 +58,7 @@ class CreateMessageApiISpec extends UnitSpec
       val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=tValue&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
      val response = WS.url(p ).post("")
       response.status shouldBe OK
-      val res = response.futureValue
-      // response. map {
-      //   case MessageResponse(messageId) => AdviceStored(messageId)
-      // }.
-      // recover {
-      //   case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => AdviceAlreadyExists
-      //   case ex => UnexpectedError(ex.getMessage)
-      // }
-      println(s"****** response: ${res.body}")
-      // val messageId: String = (res.json \ "id").as[String]
-      // val messageId: String = (response.json \ "sdfsdf").as[String]
+      response.futureValue.body.contains("Advice creation successful")
     }
   }
 }
