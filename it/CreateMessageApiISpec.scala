@@ -58,7 +58,8 @@ class CreateMessageApiISpec extends UnitSpec
       val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=tValue&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
      val response = WS.url(p ).post("")
       response.status shouldBe OK
-      response.futureValue.body.contains("Advice creation successful")
+      println(s"***** ${response.futureValue.body}")
+      response.futureValue.body should contain ("Advice creation successful")
     }
   }
 }
