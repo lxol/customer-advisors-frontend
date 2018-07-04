@@ -13,3 +13,5 @@ GET        /inbox/:utr/not-paperless            uk.gov.hmrc.contactadvisors.cont
 GET        /customer-advisors-frontend/inbox    uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inboxV2
 
 POST        /customer-advisors-frontend/submit    uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
+
+GET        /inbox/successV2                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.successV2(recipientTaxIdentifierValue, messageId, externalRef)

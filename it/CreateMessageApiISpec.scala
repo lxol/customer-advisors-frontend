@@ -63,7 +63,6 @@ class CreateMessageApiISpec extends UnitSpec
   }
 }
 
-
 class CustomerAdvisorsIntegrationServer(override val testName: String,
   servicesFromJar: Seq[String],
   servicesFromSource: Seq[String],

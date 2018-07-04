@@ -59,16 +59,16 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
     SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
   }
 
-  def createMessageV2(advice: AdviceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
-    messageConnector.createV2(secureMessageFromV2(advice))
+  def createMessageV2(advice: AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
+    messageConnector.createV2(secureMessageFromV2(advice, externalReference))
   }
   
 
-  def secureMessageFromV2(advice: AdviceV2): SecureMessageV2 = {
+  def secureMessageFromV2(advice: AdviceV2, externalReference:ExternalReferenceV2): SecureMessageV2 = {
     val taxpayerName = TaxpayerName(advice.recipientNameLine1)
     val taxIdentifier = FHDDSTaxIdentifier(advice.recipientTaxidentifierValue, "sautr")
     val recipient = RecipientV2(taxIdentifier, taxpayerName, advice.recipientEmail)
-    val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
+    // val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
     val messageType = "fhddsAlertMessage"
     val subject = advice.subject
     val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
