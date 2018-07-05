@@ -1,5 +1,6 @@
 import java.util.UUID
 import org.joda.time.DateTime
+import org.jsoup.Jsoup
 import org.scalatest.DoNotDiscover
 
 import org.scalatest.concurrent.ScalaFutures
@@ -58,8 +59,19 @@ class CreateMessageApiISpec extends UnitSpec
       val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=tValue&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
      val response = WS.url(p ).post("")
       response.status shouldBe OK
-      println(s"***** ${response.futureValue.body}")
-      response.futureValue.body should contain ("Advice creation successful")
+      val body = response.futureValue.body
+      println(body)
+      val document = Jsoup.parse(body)
+     withClue("result page title") {
+       document.title() shouldBe "Advice creation successful"
+     }
+     withClue("FHDDS Reference") {
+       document.select("ul li").get(0).text() shouldBe "FHDDS Reference: "
+     }
+        // creationResult.get(0).text() shouldBe message
+     // withClue("result page title") {
+     //   document.title() shouldBe "Advice creation successful"
+     // }
     }
   }
 }
