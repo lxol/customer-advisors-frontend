@@ -52,26 +52,28 @@ class CreateMessageApiISpec extends UnitSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit lazy val app = play.api.Play.current
 
-  "Adding a message using v2 API" should {
-    "create a message" in {
+  "POST /customer-advisors-frontend/submit" should {
+    "redirect to the success page when the form submission is successful" in {
 
       val content = DateTime.now().toString
-      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=tValue&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
+      val fhddsRef = "fhddsref"
+      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=${fhddsRef}&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
      val response = WS.url(p ).post("")
       response.status shouldBe OK
       val body = response.futureValue.body
-      println(body)
       val document = Jsoup.parse(body)
      withClue("result page title") {
        document.title() shouldBe "Advice creation successful"
      }
      withClue("FHDDS Reference") {
-       document.select("ul li").get(0).text() shouldBe "FHDDS Reference: "
+       document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: ${fhddsRef}"
      }
-        // creationResult.get(0).text() shouldBe message
-     // withClue("result page title") {
-     //   document.title() shouldBe "Advice creation successful"
-     // }
+     withClue("Message Id") {
+       document.select("ul li").get(1).text()  should startWith regex "Id: [0-9a-f]+"
+     }
+     withClue("External Ref") {
+       document.select("ul li").get(2).text()  should startWith regex "External Ref: [0-9a-f-]+"
+     }
     }
   }
 }
