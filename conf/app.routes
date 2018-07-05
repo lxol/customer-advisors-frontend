@@ -15,3 +15,5 @@ GET        /customer-advisors-frontend/inbox    uk.gov.hmrc.contactadvisors.cont
 POST        /customer-advisors-frontend/submit    uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
 
 GET        /customer-advisors-frontend/inbox/successV2                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.successV2(recipientTaxIdentifierValue, messageId, externalRef)
+
+GET        /customer-advisors-frontend/inbox/unexpectedV2                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpectedV2(recipientTaxIdentifierValue)

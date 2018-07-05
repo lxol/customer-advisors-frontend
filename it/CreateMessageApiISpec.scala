@@ -37,7 +37,6 @@ class CreateMessageApiISpec extends UnitSpec
   override def beforeAll(): Unit = {
     super.beforeAll()
     if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
-      println(s"******* INTEGRATION SERVER START")
       server.start()
     }
   }
@@ -45,7 +44,6 @@ class CreateMessageApiISpec extends UnitSpec
   override def afterAll(): Unit = {
     super.afterAll()
     if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
-      println(s"******* INTEGRATION SERVER STOP")
       server.stop()
     }
   }
@@ -56,24 +54,41 @@ class CreateMessageApiISpec extends UnitSpec
     "redirect to the success page when the form submission is successful" in {
 
       val content = DateTime.now().toString
-      val fhddsRef = "fhddsref"
+      val fhddsRef = "XZFH00000100024"
       val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=${fhddsRef}&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
-     val response = WS.url(p ).post("")
+      val response = WS.url(p ).post("")
       response.status shouldBe OK
       val body = response.futureValue.body
       val document = Jsoup.parse(body)
-     withClue("result page title") {
-       document.title() shouldBe "Advice creation successful"
-     }
-     withClue("FHDDS Reference") {
-       document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: ${fhddsRef}"
-     }
-     withClue("Message Id") {
-       document.select("ul li").get(1).text()  should startWith regex "Id: [0-9a-f]+"
-     }
-     withClue("External Ref") {
-       document.select("ul li").get(2).text()  should startWith regex "External Ref: [0-9a-f-]+"
-     }
+      withClue("result page title") {
+        document.title() shouldBe "Advice creation successful"
+      }
+      withClue("result page FHDDS Reference") {
+        document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: ${fhddsRef}"
+      }
+      withClue("result page Message Id") {
+        document.select("ul li").get(1).text()  should startWith regex "Id: [0-9a-f]+"
+      }
+      withClue("result page External Ref") {
+        document.select("ul li").get(2).text()  should startWith regex "External Ref: [0-9a-f-]+"
+      }
+    }
+    "redirect to the unexpected page when the form submission is unsuccessful" in {
+
+      val content = DateTime.now().toString
+      val fhddsRef = "XZFH00000100024"
+      val wrongEmail = "foobar"
+      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=${fhddsRef}&recipientEmail=${wrongEmail}&recipientNameLine1=rLine1&messageType=mType")
+      val response = WS.url(p ).post("")
+      response.status shouldBe OK
+      val body = response.futureValue.body
+      val document = Jsoup.parse(body)
+      withClue("result page title") {
+        document.title() shouldBe "Unexpected error"
+      }
+      withClue("result page title") {
+        document.select("p.alert__message").text() shouldBe(s"There is an unexpected problem. Secure inbox message has not been created for FHDDS Reference ${fhddsRef}")
+      }
     }
   }
 }
