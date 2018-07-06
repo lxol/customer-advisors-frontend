@@ -28,83 +28,40 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
-import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub}
+import uk.gov.hmrc.contactadvisors.dependencies.MessageStubV2
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
+import uk.gov.hmrc.utils.{SecureMessageCreatorV2, WithWiremock}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-class SecureMessageControllerSpec
+class SecureMessageControllerV2Spec
   extends UnitSpec
     with OneServerPerSuite
     with ScalaFutures
     with IntegrationPatience
     with WithWiremock
-    with EntityResolverStub
-    with MessageStub {
+    with MessageStubV2 {
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
-  val customer_utr = UUID.randomUUID.toString
+  // val customer_utr = UUID.randomUUID.toString
 
-  val utr = SaUtr("123456789")
+  // val utr = SaUtr("123456789")
   val subject = "This is a response to your HMRC request"
+  val content = "A message success to the customer."
+  val recipientTaxidentifierName = "HMRC-OBTDS-ORG"
+  val recipientTaxidentifierValue = "XZFH00000100024"
+  val recipientEmail = "foo@bar.com"
+  val recipientNameLine1 = "Mr. John Smith"
+  val messageType = "fhddsAlertMessage"
+
   val adviceBody = "<p>This is the content of the secure message</p>"
 
   val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]), app.injector.instanceOf(classOf[MessagesApi]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
     def auditSource: String = "customer-advisors-frontend"
-  }
-  "GET /inbox/:utr" should {
-    "return 200" in {
-      val result = controller.inbox(customer_utr)(getRequest)
-      status(result) shouldBe Status.OK
-    }
-
-    "return HTML" in {
-      val result = controller.inbox(customer_utr)(getRequest)
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
-    }
-
-    "show main banner" in {
-      val result = controller.inbox(customer_utr)(getRequest)
-      val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
-    }
-
-    "have the expected elements on the form" in {
-      val result = controller.inbox(customer_utr)(getRequest)
-      status(result) shouldBe 200
-
-      val document = Jsoup.parse(contentAsString(result))
-      val form = document.select("form#form-submit-customer-advice").get(0)
-      val formElements = form.getAllElements.asScala
-
-      val adviceSubject = formElements.find(_.id() == "subject")
-      withClue("advice subject field") {
-        Inside.inside(adviceSubject) {
-          case Some(element) =>
-            element.tagName() shouldBe "input"
-            element.attr("type") shouldBe "hidden"
-            element.`val`() shouldBe "Response to your enquiry from HMRC customer services"
-        }
-      }
-
-      val adviceMessage = formElements.find(_.id() == "message")
-      withClue("advice message field") {
-        adviceMessage.map(_.tagName()) shouldBe Some("textarea")
-      }
-
-      val submitAdvice = formElements.find(_.id() == "submit-advice")
-      withClue("submit advice button") {
-        submitAdvice.map(_.tagName()) shouldBe Some("button")
-        submitAdvice.map(_.text()) shouldBe Some("Send")
-      }
-
-    }
   }
 
   "GET /customer-advisors-frontend/inbox" should {
@@ -195,88 +152,16 @@ class SecureMessageControllerSpec
     }
   }
 
-  "POST /inbox/:utr" should {
-    "indicate a bad request when any of the form elements are empty" in {
-      val emptySubject = controller.submit(customer_utr)(
-        FakeRequest().withFormUrlEncodedBody(
-          "message" -> "A message success to the customer. lkasdfjas;ldfjk"
-        )
-      )
-      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptySubject) shouldBe BAD_REQUEST
-
-      val emptyMessage = controller.submit(customer_utr)(
-        FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "subject"
-        )
-      )
-      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptyMessage) shouldBe BAD_REQUEST
-
-      val emptyFormFields = controller.submit(customer_utr)(FakeRequest())
-      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 2
-      status(emptyFormFields) shouldBe BAD_REQUEST
-    }
-
-    "Leave script tags in the message and subject" in {
-      givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
-
-      val xssMessage = controller.submit(utr.value)(
-        FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "This is a response to your HMRC request<script>alert('hax')</script>",
-          "message" -> "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
-        )
-      )
-
-      xssMessage returnsRedirectTo s"/inbox/$utr/success"
-    }
-
-    "redirect to the success page when the form submission is successful" in {
-      givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
-
-      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
-    }
-
-    "redirect and indicate a duplicate message submission" in {
-      givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
-
-      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
-    }
-
-    "redirect and indicate an unexpected error has occurred when processing the submission" in {
-      givenEntityResolverReturnsAPaperlessUser(utr.value)
-      givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
-
-      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
-    }
-
-    "redirect and indicate that the user has not opted in for paperless communications" in {
-      givenEntityResolverReturnsANonPaperlessUser(utr.value)
-
-      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
-    }
-
-    "redirect and indicate a submission for unknown utr" in {
-      givenEntityResolverReturnsNotFound(utr.value)
-
-      submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
-    }
-
-  }
-
   "POST /customer-advisors-frontend/submit" should {
     "indicate a bad request when any of the form elements are empty" in {
       val emptySubject = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> "A message success to the customer.",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
+          "content" -> content,
+          "recipientTaxidentifierName" -> recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
+          "recipientEmail" -> recipientEmail,
+          "recipientNameLine1" -> recipientNameLine1,
+          "messageType" -> messageType
         )
       )
       Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
@@ -284,35 +169,35 @@ class SecureMessageControllerSpec
 
       val emptyMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "subject",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
+          "subject" -> subject,
+          "recipientTaxidentifierName" -> recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
+          "recipientEmail" -> recipientEmail,
+          "recipientNameLine1" -> recipientNameLine1,
+          "messageType" -> messageType
         )
       )
       Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
       status(emptyMessage) shouldBe BAD_REQUEST
 
       val emptyFormFields = controller.submitV2()(FakeRequest())
-      // println(s"******* emptyFormField: ${contentAsString(emptyFormFields)}")
       Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 7
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
 
     "Leave script tags in the message and subject" in {
-      givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
+      val uncleanMessage = SecureMessageCreatorV2.uncleanMessage
+      givenMessageRespondsWith(uncleanMessage, successfulResponse)
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> "A message success to the customer.",
-          "subject" -> "subject",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
+          "content" -> uncleanMessage.content,
+          "subject" -> subject,
+          "recipientTaxidentifierName" -> recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
+          "recipientEmail" -> recipientEmail,
+          "recipientNameLine1" -> recipientNameLine1,
+          "messageType" -> messageType
         )
       )
 
@@ -352,41 +237,41 @@ class SecureMessageControllerSpec
     //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
     // }
 
-  }
-  "submission result page" should {
-    "contain correct message for success" in {
-      controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Advice creation successful", utr.value,
-        "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
-      )
-    }
-    "contain correct message for duplicate" in {
-      controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Advice already exists", utr.value,
-        "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
-      )
-    }
-    "contain correct message for unknown taxid" in {
-      controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Unknown UTR", utr.value,
-        "The SA-UTR provided is not recognised by the Digital Tax Platform."
-      )
-    }
-    "contain correct message for not paperless user" in {
-      controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "User is not paperless", utr.value,
-        s"The customer is not registered for paperless communications."
-      )
-    }
-    "contain correct message for unexpected error" in {
-      controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-        "Unexpected error", utr.value,
-        "There is an unexpected problem. There may be an issue with the connection. Please try again."
-      )
-    }
+  //}
+  // "submission result page" should {
+  //   "contain correct message for success" in {
+  //     controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+  //       "Advice creation successful", utr.value,
+  //       "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
+  //     )
+  //   }
+  //   "contain correct message for duplicate" in {
+  //     controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+  //       "Advice already exists", utr.value,
+  //       "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
+  //     )
+  //   }
+  //   "contain correct message for unknown taxid" in {
+  //     controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+  //       "Unknown UTR", utr.value,
+  //       "The SA-UTR provided is not recognised by the Digital Tax Platform."
+  //     )
+  //   }
+  //   "contain correct message for not paperless user" in {
+  //     controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+  //       "User is not paperless", utr.value,
+  //       s"The customer is not registered for paperless communications."
+  //     )
+  //   }
+  //   "contain correct message for unexpected error" in {
+  //     controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+  //       "Unexpected error", utr.value,
+  //       "There is an unexpected problem. There may be an issue with the connection. Please try again."
+  //     )
+  //   }
   }
 
-  def submissionOfCompletedForm() = controller.submit(utr.value)(
+  def submissionOfCompletedForm() = controller.submitV2()(
     FakeRequest().withFormUrlEncodedBody(
       "subject" -> subject,
       "message" -> adviceBody

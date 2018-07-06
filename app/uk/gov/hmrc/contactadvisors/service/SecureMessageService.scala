@@ -73,7 +73,7 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
     val subject = advice.subject
     val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
     val validFrom = DateTime.now().toLocalDate
-    val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
+    // val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
 
     // val jsonString =
     //   s"""
@@ -106,7 +106,7 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
 
     // Json.parse(jsonString).as[JsObject] // 
  
-    SecureMessageV2(recipient, externalReference, messageType, subject, content, validFrom, details)
+    SecureMessageV2(recipient, externalReference, messageType, subject, content, validFrom)
   }
 
 }

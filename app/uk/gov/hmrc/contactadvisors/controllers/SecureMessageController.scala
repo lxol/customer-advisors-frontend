@@ -79,9 +79,9 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
       adviceFormV2.bindFromRequest.fold(
         formWithErrors => Future.successful(
           {
-            Logger.info(s"****** formWithErrors: ${formWithErrors}")
-            BadRequest("foobar")
-            // BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+            // Logger.info(s"****** formWithErrors: ${formWithErrors}")
+            // BadRequest("foobar")
+            BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(formWithErrors))
           }
         ),
         advice => {
