@@ -27,6 +27,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
+import play.api.Logger
 
 
 @Singleton
@@ -48,6 +49,8 @@ class MessageConnector @Inject()(http: HttpClient,
     val createMessageAPIurl: String = s"$serviceUrl/messages"
 
 
+    Logger.info(s"******* POSTV1 createMessageAPIurl: ${createMessageAPIurl}}")
+    Logger.info(s"******* POSTV1: ${secureMessage}}")
     http.POST[SecureMessage, MessageResponse](url = createMessageAPIurl, body = secureMessage).
       map {
         case MessageResponse(messageId) => AdviceStored(messageId)
@@ -64,7 +67,8 @@ class MessageConnector @Inject()(http: HttpClient,
     implicit val messageFormats = MessageResponse.formats
 
     val createMessageAPIurl: String = s"$serviceUrl/messages"
-
+    Logger.info(s"******* POSTV2 createMessageAPIurl: ${createMessageAPIurl}}")
+    Logger.info(s"******* POSTV2: ${secureMessage}}")
 
     http.POST[SecureMessageV2, MessageResponse](url = createMessageAPIurl, body = secureMessage).
       map {

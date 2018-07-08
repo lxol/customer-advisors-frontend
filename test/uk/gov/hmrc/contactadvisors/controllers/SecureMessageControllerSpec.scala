@@ -267,92 +267,6 @@ class SecureMessageControllerSpec
 
   }
 
-  "POST /customer-advisors-frontend/submit" should {
-    "indicate a bad request when any of the form elements are empty" in {
-      val emptySubject = controller.submitV2()(
-        FakeRequest().withFormUrlEncodedBody(
-          "content" -> "A message success to the customer.",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
-        )
-      )
-      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptySubject) shouldBe BAD_REQUEST
-
-      val emptyMessage = controller.submitV2()(
-        FakeRequest().withFormUrlEncodedBody(
-          "subject" -> "subject",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
-        )
-      )
-      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptyMessage) shouldBe BAD_REQUEST
-
-      val emptyFormFields = controller.submitV2()(FakeRequest())
-      // println(s"******* emptyFormField: ${contentAsString(emptyFormFields)}")
-      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 7
-      status(emptyFormFields) shouldBe BAD_REQUEST
-    }
-
-    "Leave script tags in the message and subject" in {
-      givenMessageRespondsWith(SecureMessageCreator.uncleanMessage, successfulResponse)
-
-      val xssMessage = controller.submitV2()(
-        FakeRequest().withFormUrlEncodedBody(
-          "content" -> "A message success to the customer.",
-          "subject" -> "subject",
-          "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
-          "recipientTaxidentifierValue" -> "XZFH00000100024",
-          "recipientEmail" -> "foo@bar.com",
-          "recipientNameLine1" -> "Mr. John Smith",
-          "messageType" -> "fhddsAlertMessage"
-        )
-      )
-
-      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/success"
-    }
-
-    // "redirect to the success page when the form submission is successful" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
-    //   givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
-
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
-    // }
-
-    // "redirect and indicate a duplicate message submission" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
-    //   givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
-
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
-    // }
-
-    // "redirect and indicate an unexpected error has occurred when processing the submission" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
-    //   givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
-
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
-    // }
-
-    // "redirect and indicate that the user has not opted in for paperless communications" in {
-    //   givenEntityResolverReturnsANonPaperlessUser(utr.value)
-
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
-    // }
-
-    // "redirect and indicate a submission for unknown utr" in {
-    //   givenEntityResolverReturnsNotFound(utr.value)
-
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
-    // }
-
-  }
   "submission result page" should {
     "contain correct message for success" in {
       controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
@@ -423,7 +337,7 @@ class SecureMessageControllerSpec
       status(result) shouldBe 303
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should (startWith(s"/secure-message$url") or startWith(s"/customer-advisors-frontend$url"))
+        case Some(redirect) => redirect should startWith(s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 
