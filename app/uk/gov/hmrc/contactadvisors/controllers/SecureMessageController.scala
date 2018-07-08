@@ -75,11 +75,12 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
   }
 
   def submitV2() =
-    Action.async { implicit request =>
+    Action.async { implicit request => {
+      Logger.info(s"******* V2RequestBody: ${request.body}")
       adviceFormV2.bindFromRequest.fold(
         formWithErrors => Future.successful(
           {
-            // Logger.info(s"****** formWithErrors: ${formWithErrors}")
+            Logger.info(s"****** V2formWithErrors: ${formWithErrors}")
             // BadRequest("foobar")
             BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(formWithErrors))
           }
@@ -97,6 +98,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
           }
         }
       )
+    }
     }
 
   def success(utr: String) = Action.async { implicit request =>

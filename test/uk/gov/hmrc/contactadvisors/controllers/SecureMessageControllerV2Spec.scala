@@ -187,17 +187,19 @@ class SecureMessageControllerV2Spec
 
     "Leave script tags in the message and subject" in {
       val uncleanMessage = SecureMessageCreatorV2.uncleanMessage
+      println(s"****** uncleanMessage ${uncleanMessage}")
       givenMessageRespondsWith(uncleanMessage, successfulResponse)
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
           "content" -> uncleanMessage.content,
-          "subject" -> subject,
-          "recipientTaxidentifierName" -> recipientTaxidentifierName,
-          "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
-          "recipientEmail" -> recipientEmail,
-          "recipientNameLine1" -> recipientNameLine1,
-          "messageType" -> messageType
+          "subject" -> uncleanMessage.subject,
+          "recipientTaxidentifierName" -> uncleanMessage.recipient.taxIdentifier.name,
+          "recipientTaxidentifierValue" -> uncleanMessage.recipient.taxIdentifier.value,
+          "recipientEmail" -> uncleanMessage.recipient.email,
+          "recipientNameLine1" -> uncleanMessage.recipient.name.line1,
+          "messageType" -> uncleanMessage.messageType,
+          "alertQueue" -> uncleanMessage.alertQueue
         )
       )
 

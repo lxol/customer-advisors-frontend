@@ -20,6 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessageV2
+// import uk.gov.hmrc.utils.SecureMessageCreatorV2._
 
 trait MessageStubV2 {
   val messageEndpoint = "/messages"
@@ -53,29 +54,35 @@ trait MessageStubV2 {
       post(urlEqualTo(messageEndpoint))
         .withRequestBody(
           equalToJson(
-            s"""
+            {
+            val foo = s"""
                |{
                |  "recipient": {
                |    "taxIdentifier": {
-               |      "name": "HMRC-OBTDS-ORG",
-               |      "value": "XZFH00000100024"
+
+               |      "name": ${request.recipient.taxIdentifier.name}",
+               |      "value": ${request.recipient.taxIdentifier.value}"
                |    }
                |  "name":{
-               |      "line1": "Mr. John Smith"
+               |      "line1": "${request.recipient.name.line1}"
                |    },
-               |  "email":"johnsmith@gmail.com"
+               |  "email":"${request.recipient.email}"
                |  },
                |  "externalRef": {
-               |    "source": "customer-advisor"
+               |    "id": "${request.externalRef.id}",
+               |    "source": "${request.externalRef.source}"
                |  },
-               |  "messageType": "fhddsAlertMessage",
+               |  "messageType": "${request.messageType}",
 
                |  "subject": "${request.subject}",
                |  "content": "${request.content}",
                |  "validFrom": "${request.validFrom}",
-               |  "alertQueue":"PRIORITY"
+               |  "alertQueue":"${request.alertQueue}"
                |}
-         """.stripMargin,
+         """.stripMargin
+              println(s"****** request to compareTo: ${foo}")
+              foo
+              },
             JSONCompareMode.LENIENT
           )
         )

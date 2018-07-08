@@ -66,13 +66,14 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
 
   def secureMessageFromV2(advice: AdviceV2, externalReference:ExternalReferenceV2): SecureMessageV2 = {
     val taxpayerName = TaxpayerName(advice.recipientNameLine1)
-    val taxIdentifier = FHDDSTaxIdentifier(advice.recipientTaxidentifierValue, "sautr")
+    val taxIdentifier = FHDDSTaxIdentifier(advice.recipientTaxidentifierValue, advice.recipientTaxidentifierName)
     val recipient = RecipientV2(taxIdentifier, taxpayerName, advice.recipientEmail)
     // val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
-    val messageType = "fhddsAlertMessage"
+    val messageType = advice.messageType
     val subject = advice.subject
     val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
     val validFrom = DateTime.now().toLocalDate
+    // val validFrom = advice
     // val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
 
     // val jsonString =

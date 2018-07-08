@@ -32,10 +32,10 @@ object SecureMessageCreatorV2 {
   val recipientNameLine1 = "Mr. John Smith"
   val taxpayerName = TaxpayerName(recipientNameLine1)
   val recipientEmail = "foo@bar.com"
-  val recipient = RecipientV2(taxIdentifier, taxpayerName, recipientEmail)
   val recipientTaxidentifierName = "HMRC-OBTDS-ORG"
   val recipientTaxidentifierValue = "XZFH00000100024"
-  val taxIdentifier = FHDDSTaxIdentifier(recipientTaxidentifierValue, "sautr")
+  val taxIdentifier = FHDDSTaxIdentifier(recipientTaxidentifierValue, recipientTaxidentifierName)
+  val recipient = RecipientV2(taxIdentifier, taxpayerName, recipientEmail)
 
   // val externalReference = ExternalReference(generateExternalRefID, "customer-advisor")
   //val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)

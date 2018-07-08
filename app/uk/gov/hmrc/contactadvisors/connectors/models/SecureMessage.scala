@@ -57,7 +57,7 @@ object SecureMessage {
 
 
 
-case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReferenceV2, messageType: String, subject: String, content: String, validFrom: LocalDate)
+case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReferenceV2, messageType: String, subject: String, content: String, validFrom: LocalDate, alertQueue: String = "PRIORITY")
 
 case class FHDDSTaxIdentifier(value: String, name: String) 
 final case class RecipientV2(taxIdentifier: FHDDSTaxIdentifier, name: TaxpayerName, email: String )
