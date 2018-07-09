@@ -69,7 +69,7 @@ trait MessageStubV2 {
                |  {"line1":"Mr. John Smith"},
                |  "email":"foo@bar.com"},
                | "externalRef":
-               | {"id":"01012625-f783-4b63-a022-e01af0658687",
+               | {
                |  "source":"customer-advisor"
                | },
                | "messageType":"fhddsAlertMessage",
@@ -84,7 +84,7 @@ trait MessageStubV2 {
               },
             JSONCompareMode.LENIENT
           )
-        )
+        )//.withRequestBody(matchingJsonPath("$.recipient.externalRef.id =~ /[a-b0-9-]*/"))
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
   }
 }
