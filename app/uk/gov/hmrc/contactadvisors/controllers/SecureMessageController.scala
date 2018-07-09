@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
+import uk.gov.hmrc.contactadvisors.connectors.models.ExternalReferenceV2
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
@@ -51,11 +53,12 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     Future.successful(
       Ok(
         uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(
-          adviceForm.fill(Advice("", ""))
+          adviceFormV2.fill(AdviceV2("", "", "", "", "", "", ""))
         )
       )
     )
   }
+
   def submit(utr: String) = Action.async { implicit request =>
     adviceForm.bindFromRequest.fold(
       formWithErrors => Future.successful(
@@ -71,9 +74,38 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )
   }
 
+  def submitV2() =
+    Action.async { implicit request => {
+      Logger.info(s"******* V2RequestBody: ${request.body}")
+      adviceFormV2.bindFromRequest.fold(
+        formWithErrors => Future.successful(
+          {
+            BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox_v2(formWithErrors))
+          }
+        ),
+        advice => {
+          def generateExternalRefID = UUID.randomUUID().toString
+
+          val externalReference = ExternalReferenceV2(generateExternalRefID, "customer-advisor")
+          val result = secureMessageService.createMessageV2(advice, externalReference)
+          customerAdviceAudit.auditAdviceV2(result)
+          result.map {
+            handleStorageResultV2(advice.recipientTaxidentifierValue, externalReference.id)
+          }
+        }
+      )
+    }
+    }
+
   def success(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.success(utr))
+    )
+  }
+
+  def successV2(recipientTaxIdentifierValue: String, messageId: String, externalRef: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.successV2(recipientTaxIdentifierValue, messageId, externalRef))
     )
   }
 
@@ -86,6 +118,12 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
   def unexpected(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.unexpected(utr))
+    )
+  }
+
+  def unexpectedV2(recipientTaxIdentifierValue: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.unexpectedV2(recipientTaxIdentifierValue))
     )
   }
 
@@ -108,12 +146,30 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )(Advice.apply)(Advice.unapply)
   )
 
+  def adviceFormV2 = Form[AdviceV2](
+    mapping(
+      "subject" -> nonEmptyText,
+      "content" -> nonEmptyText,
+      "recipientTaxidentifierName" -> nonEmptyText,
+      "recipientTaxidentifierValue" -> nonEmptyText,
+      "recipientEmail" -> nonEmptyText,
+      "recipientNameLine1" -> nonEmptyText,
+      "messageType" -> nonEmptyText
+    )(AdviceV2.apply)(AdviceV2.unapply)
+  )
+
   private def handleStorageResult(utr: String): StorageResult => Result = {
     case AdviceStored(_) => Redirect(routes.SecureMessageController.success(utr))
     case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
     case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
     case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
     case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
+  }
+
+  private def handleStorageResultV2(recipientTaxIdentifierValue: String, externalRef: String): StorageResult => Result = {
+    case AdviceStored(messageId) => Redirect(routes.SecureMessageController.successV2(recipientTaxIdentifierValue, messageId, externalRef))
+    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.successV2(recipientTaxIdentifierValue, "duplication", externalRef))
+    case _ => Redirect(routes.SecureMessageController.unexpectedV2(recipientTaxIdentifierValue))
   }
 }
 
@@ -151,5 +207,31 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
         }
     }
   }
-}
 
+  def auditAdviceV2(result: Future[StorageResult])(implicit hc: HeaderCarrier): Unit = {
+    def createEvent(messageInfo: Map[String, String], auditType: String, transactionName: String) =
+      DataEvent(
+        auditSource = auditSource,
+        auditType = auditType,
+        tags = Map(EventKeys.TransactionName -> transactionName),
+        detail = Map(
+          // taxId.name -> taxId.value
+        ) ++ messageInfo
+      )
+
+    result.onComplete { res1 =>
+      res1.map {
+        case AdviceStored(messageId) => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
+        case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")
+      }.
+        recover { case ex =>
+          createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
+        }.
+        foreach { ev =>
+          auditConnector.sendEvent(ev).onFailure {
+            case err => Logger.error("Could not audit event", err)
+          }
+        }
+    }
+  }
+}
