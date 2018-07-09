@@ -24,6 +24,7 @@ import uk.gov.hmrc.time.DateTimeUtils
 object SecureMessageCreatorV2 {
   val subject = "This is a response to your HMRC request"
   val uncleanContent = "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
+  val cleanContent = "his is the content of the secure message"
   val recipientTaxidentifierName = "HMRC-OBTDS-ORG"
   val recipientTaxidentifierValue = "XZFH00000100024"
   val recipientEmail = "another@somewhere.co.uk"
@@ -39,6 +40,15 @@ object SecureMessageCreatorV2 {
       recipientNameLine1,
       messageType)
 
+  val adviceWithCleanContent =
+    AdviceV2(
+      subject,
+      cleanContent,
+      recipientTaxidentifierName,
+      recipientTaxidentifierValue,
+      recipientEmail,
+      recipientNameLine1,
+      messageType)
   // val externalReference = ExternalReferenceV2("123412342314", "sees")
   // val messageType = "fhddsAlertMessage"
 

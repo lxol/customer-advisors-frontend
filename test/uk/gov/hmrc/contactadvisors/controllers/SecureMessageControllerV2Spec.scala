@@ -185,6 +185,25 @@ class SecureMessageControllerV2Spec
       status(emptyFormFields) shouldBe BAD_REQUEST
     }
 
+    "redirect to the success page when the form submission is successful" in {
+      val advice = SecureMessageCreatorV2.adviceWithUncleanContent
+
+      givenMessageRespondsWith(advice, successfulResponse)
+
+      val xssMessage = controller.submitV2()(
+        FakeRequest().withFormUrlEncodedBody(
+          "content" -> advice.content,
+          "subject" -> advice.subject,
+          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
+          "recipientEmail" -> advice.recipientEmail,
+          "recipientNameLine1" -> advice.recipientNameLine1,
+          "messageType" -> advice.messageType
+        )
+      )
+
+      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/success"
+    }
     "Leave script tags in the message and subject" in {
       val advice = SecureMessageCreatorV2.adviceWithUncleanContent
 
