@@ -207,7 +207,6 @@ class SecureMessageControllerV2Spec
     }
 
     // "redirect to the success page when the form submission is successful" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
     //   givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
 
     //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
