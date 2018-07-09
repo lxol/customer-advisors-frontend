@@ -1,13 +1,19 @@
 # microservice specific routes
 
-GET        /inbox/:utr                          uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inbox(utr: String)
-POST       /inbox/:utr                          uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
+GET        /inbox/:utr                                      uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inbox(utr: String)
+POST       /inbox/:utr                                      uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submit(utr: String)
 
-GET        /inbox/:utr/success                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.success(utr: String)
-GET        /inbox/:utr/duplicate                uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.duplicate(utr: String)
+GET        /inbox/:utr/success                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.success(utr: String)
+GET        /inbox/:utr/duplicate                            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.duplicate(utr: String)
 
-GET        /inbox/:utr/unexpected               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpected(utr: String)
-GET        /inbox/:utr/unknown                  uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unknown(utr: String)
-GET        /inbox/:utr/not-paperless            uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notPaperless(utr: String)
+GET        /inbox/:utr/unexpected                           uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpected(utr: String)
+GET        /inbox/:utr/unknown                              uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unknown(utr: String)
+GET        /inbox/:utr/not-paperless                        uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.notPaperless(utr: String)
 
-GET        /customer-advisors-frontend/inbox    uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inboxV2
+GET        /customer-advisors-frontend/inbox                uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.inboxV2
+
+POST       /customer-advisors-frontend/submit               uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.submitV2
+
+GET        /customer-advisors-frontend/inbox/successV2      uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.successV2(recipientTaxIdentifierValue, messageId, externalRef)
+
+GET        /customer-advisors-frontend/inbox/unexpectedV2   uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpectedV2(recipientTaxIdentifierValue)
