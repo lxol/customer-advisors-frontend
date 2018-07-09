@@ -186,20 +186,19 @@ class SecureMessageControllerV2Spec
     }
 
     "Leave script tags in the message and subject" in {
-      val uncleanMessage = SecureMessageCreatorV2.uncleanMessage
-      println(s"****** uncleanMessage ${uncleanMessage}")
-      givenMessageRespondsWith(uncleanMessage, successfulResponse)
+      val advice = SecureMessageCreatorV2.adviceWithUncleanContent
+
+      givenMessageRespondsWith(advice, successfulResponse)
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> uncleanMessage.content,
-          "subject" -> uncleanMessage.subject,
-          "recipientTaxidentifierName" -> uncleanMessage.recipient.taxIdentifier.name,
-          "recipientTaxidentifierValue" -> uncleanMessage.recipient.taxIdentifier.value,
-          "recipientEmail" -> uncleanMessage.recipient.email,
-          "recipientNameLine1" -> uncleanMessage.recipient.name.line1,
-          "messageType" -> uncleanMessage.messageType,
-          "alertQueue" -> uncleanMessage.alertQueue
+          "content" -> advice.content,
+          "subject" -> advice.subject,
+          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
+          "recipientEmail" -> advice.recipientEmail,
+          "recipientNameLine1" -> advice.recipientNameLine1,
+          "messageType" -> advice.messageType
         )
       )
 
@@ -207,9 +206,9 @@ class SecureMessageControllerV2Spec
     }
 
     // "redirect to the success page when the form submission is successful" in {
-    //   givenMessageRespondsWith(SecureMessageCreator.message, successfulResponse)
+    //   givenMessageRespondsWith(SecureMessageCreatorV2.message, successfulResponse)
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/success"
+    //   submissionOfCompletedForm() returnsRedirectTo s"/customer-advisors-frontend/inbox/success"
     // }
 
     // "redirect and indicate a duplicate message submission" in {
@@ -220,8 +219,7 @@ class SecureMessageControllerV2Spec
     // }
 
     // "redirect and indicate an unexpected error has occurred when processing the submission" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
-    //   givenMessageRespondsWith(SecureMessageCreator.message, unknownTaxId)
+    //   givenMessageRespondsWith(SecureMessageCreatorV2.message, ("asdfasd", 1))
 
     //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
     // }
@@ -274,8 +272,14 @@ class SecureMessageControllerV2Spec
 
   def submissionOfCompletedForm() = controller.submitV2()(
     FakeRequest().withFormUrlEncodedBody(
-      "subject" -> subject,
-      "message" -> adviceBody
+      "content" -> "content" ,
+      "subject" -> "subject",
+      "recipientTaxidentifierName" -> "name",
+      "recipientTaxidentifierValue" -> "value",
+      "recipientEmail" -> "foo@bar.com",
+      "recipientNameLine1" -> "Mr. John Smith",
+      "messageType" -> "fhddsAlertMessage",
+      "alertQueue" -> "PRIORITY"
     )
   )
 

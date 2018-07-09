@@ -18,9 +18,11 @@ package uk.gov.hmrc.contactadvisors.dependencies
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import org.skyscreamer.jsonassert.JSONCompareMode
 import play.api.http.Status
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessageV2
+import uk.gov.hmrc.contactadvisors.domain.AdviceV2
 
 trait MessageStubV2 {
   val messageEndpoint = "/messages"
@@ -41,37 +43,89 @@ trait MessageStubV2 {
          |}
      """.stripMargin)
 
-  def givenMessageRespondsWith(request: SecureMessageV2, response: (Int, String)): Unit = {
+  // val unexpectedResponse: (Int, String)
+  //   (Status.BAD_REQUEST,
+  //   s"""
+  //      |{
+  //      |  "reason": "Unknown tax identifier name XYZ"
+  //      |}
+  //    """.stripMargin)
+
+  def givenMessageRespondsWith(advice: AdviceV2, response: (Int, String)): Unit = {
     givenThat(
       post(urlEqualTo(messageEndpoint))
+
         .withRequestBody(
           equalToJson(
             {
               s"""
                  |{"recipient":
                  | {"taxIdentifier":
-                 |  {"value":"${request.recipient.taxIdentifier.value}",
-                 |   "name":"${request.recipient.taxIdentifier.name}"
+                 |  {
+                 |   "name":"${advice.recipientTaxidentifierName}",
+                 |   "value":"${advice.recipientTaxidentifierValue}"
                  |  },
                  |  "name":
-                 |  {"line1":"${request.recipient.name.line1}"},
-                 |  "email":"${request.recipient.email}"},
+                 |  {"line1":"${advice.recipientNameLine1}"},
+                 |  "email":"${advice.recipientEmail}"},
                  | "externalRef":
                  | {
                  |  "source":"customer-advisor"
                  | },
-                 | "messageType":"${request.messageType}",
-                 | "subject":"${request.subject}",
-                 | "content":"${new String(Base64.encodeBase64(request.content.getBytes("UTF-8")))}",
-                 | "validFrom":"${request.validFrom}",
-                 | "alertQueue":"${request.alertQueue}"
+                 | "messageType":"${advice.messageType}",
+                 | "subject":"${advice.subject}",
+                 | "content":"${new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))}",
+                 | "validFrom":"${DateTime.now().toLocalDate}",
+                 | "alertQueue":"PRIORITY"
                  |}
          """.stripMargin
             },
             JSONCompareMode.LENIENT
           )
         )
+        // .withRequestBody(
+        //   equalToJson(
+        //     {
+        //       s"""
+        //          |{
+        //          | "recipient":
+        //          | {
+        //          |  "email":"${advice.recipientEmail}"},
+        //          |}
+        //  """.stripMargin
+        //     },
+        //     JSONCompareMode.LENIENT
+        //   )
+        // )
         .withRequestBody(matchingJsonPath("$.externalRef.id"))
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
   }
 }
+
+        // .withRequestBody(
+        //   equalToJson(
+        //     {
+        //       s"""
+        //          |{"recipient":
+        //          | {"taxIdentifier":
+        //          |  {"value":"${advice.recipientTaxidentifierValue}",
+        //          |   "name":"${advice.recipientTaxidentifierName}"
+        //          |  },
+        //          |  "name":
+        //          |  {"line1":"${advice.recipientNameLine1}"},
+        //          |  "email":"${advice.recipientEmail}"},
+        //          | "externalRef":
+        //          | {
+        //          |  "source":"customer-advisor"
+        //          | },
+        //          | "messageType":"${advice.messageType}",
+        //          | "subject":"${advice.subject}",
+        //          | "content":"${new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))}",
+        //          | "validFrom":"${DateTime.now().toLocalDate}",
+        //          | "alertQueue":"PRIORITY"
+        //          |}
+        //  """.stripMargin
+        //     },
+        //     JSONCompareMode.LENIENT
+        //   )
+        // )
