@@ -115,6 +115,12 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
     )
   }
 
+  def duplicateV2(recipientTaxIdentifierValue: String) = Action.async { implicit request =>
+    Future.successful(
+      Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.duplicate_v2(recipientTaxIdentifierValue))
+    )
+  }
+
   def unexpected(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(uk.gov.hmrc.contactadvisors.views.html.secureMessage.unexpected(utr))
@@ -168,7 +174,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 
   private def handleStorageResultV2(recipientTaxIdentifierValue: String, externalRef: String): StorageResult => Result = {
     case AdviceStored(messageId) => Redirect(routes.SecureMessageController.successV2(recipientTaxIdentifierValue, messageId, externalRef))
-    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.successV2(recipientTaxIdentifierValue, "duplication", externalRef))
+    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicateV2(recipientTaxIdentifierValue))
     case _ => Redirect(routes.SecureMessageController.unexpectedV2(recipientTaxIdentifierValue))
   }
 }

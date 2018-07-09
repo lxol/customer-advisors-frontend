@@ -224,69 +224,97 @@ class SecureMessageControllerV2Spec
       xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/success"
     }
 
-    // "redirect to the success page when the form submission is successful" in {
-    //   givenMessageRespondsWith(SecureMessageCreatorV2.message, successfulResponse)
+    "redirect and indicate a duplicate message submission" in {
+      val advice = SecureMessageCreatorV2.adviceWithCleanContent
+      givenMessageRespondsWith(advice, duplicatedMessage)
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/customer-advisors-frontend/inbox/success"
-    // }
+      val xssMessage = controller.submitV2()(
+        FakeRequest().withFormUrlEncodedBody(
+          "content" -> advice.content,
+          "subject" -> advice.subject,
+          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
+          "recipientEmail" -> advice.recipientEmail,
+          "recipientNameLine1" -> advice.recipientNameLine1,
+          "messageType" -> advice.messageType
+        )
+      )
 
-    // "redirect and indicate a duplicate message submission" in {
-    //   givenEntityResolverReturnsAPaperlessUser(utr.value)
-    //   givenMessageRespondsWith(SecureMessageCreator.message, duplicatedMessage)
+      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/duplicateV2"
+    }
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/duplicate"
-    // }
+    "redirect and indicate an unexpected error has occurred when processing the submission" in {
+      val advice = SecureMessageCreatorV2.adviceWithCleanContent
+      givenMessageRespondsWith(advice, ( 1, "asdfasdf" ))
 
-    // "redirect and indicate an unexpected error has occurred when processing the submission" in {
-    //   givenMessageRespondsWith(SecureMessageCreatorV2.message, ("asdfasd", 1))
+      val xssMessage = controller.submitV2()(
+        FakeRequest().withFormUrlEncodedBody(
+          "content" -> advice.content,
+          "subject" -> advice.subject,
+          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
+          "recipientEmail" -> advice.recipientEmail,
+          "recipientNameLine1" -> advice.recipientNameLine1,
+          "messageType" -> advice.messageType
+        )
+      )
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unexpected"
-    // }
+      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/unexpectedV2"
+    }
 
-    // "redirect and indicate that the user has not opted in for paperless communications" in {
-    //   givenEntityResolverReturnsANonPaperlessUser(utr.value)
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/not-paperless"
-    // }
+  }
+  "submission result page" should {
+    "contain correct message for success" in {
+      val result = controller.successV2("FHDDS_REF", "234234", "1234-223423")(getRequest)
+      //   "Advice creation successful", 
+      //   "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
+      // )
 
-    // "redirect and indicate a submission for unknown utr" in {
-    //   givenEntityResolverReturnsNotFound(utr.value)
+      status(result) shouldBe 200
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
 
-    //   submissionOfCompletedForm() returnsRedirectTo s"/inbox/$utr/unknown"
-    // }
+      withClue("result page title") {
+        document.title() shouldBe "Advice creation successful"
+      }
+      withClue("result page FHDDS Reference") {
+        document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: FHDDS_REF"
+      }
+      withClue("result page Message Id") {
+        document.select("ul li").get(1).text() should startWith regex "Id: [0-9a-f]+"
+      }
+      withClue("result page External Ref") {
+        document.select("ul li").get(2).text() should startWith regex "External Ref: [0-9a-f-]+"
+      }
+    }
+    "contain correct message for duplicate" in {
+      val result  = controller.duplicateV2("FHDDS_REF")(getRequest) 
+      status(result) shouldBe 200
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
 
-  //}
-  // "submission result page" should {
-  //   "contain correct message for success" in {
-  //     controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-  //       "Advice creation successful", utr.value,
-  //       "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
-  //     )
-  //   }
-  //   "contain correct message for duplicate" in {
-  //     controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-  //       "Advice already exists", utr.value,
-  //       "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
-  //     )
-  //   }
-  //   "contain correct message for unknown taxid" in {
-  //     controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-  //       "Unknown UTR", utr.value,
-  //       "The SA-UTR provided is not recognised by the Digital Tax Platform."
-  //     )
-  //   }
-  //   "contain correct message for not paperless user" in {
-  //     controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-  //       "User is not paperless", utr.value,
-  //       s"The customer is not registered for paperless communications."
-  //     )
-  //   }
-  //   "contain correct message for unexpected error" in {
-  //     controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
-  //       "Unexpected error", utr.value,
-  //       "There is an unexpected problem. There may be an issue with the connection. Please try again."
-  //     )
-  //   }
+      withClue("result page title") {
+        document.title() shouldBe "Advice already exists"
+      }
+    }
+    
+    "contain correct message for unexpected error" in {
+      val result = controller.unexpected("FHDDS_REF")(getRequest) 
+      status(result) shouldBe 200
+      contentType(result) shouldBe Some("text/html")
+      charset(result) shouldBe Some("utf-8")
+      val document = Jsoup.parse(contentAsString(result))
+      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+
+      withClue("result page title") {
+        document.title() shouldBe "Unexpected error"
+      }
+    }
   }
 
   def submissionOfCompletedForm() = controller.submitV2()(
@@ -302,30 +330,6 @@ class SecureMessageControllerV2Spec
     )
   )
 
-  implicit class ShouldContainPageWithMessage(result: Future[Result]) {
-    def shouldContainPageWithTitleAndMessage(title: String, utr: String, message: String) = {
-      status(result) shouldBe 200
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
-
-      val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
-
-      withClue("result page title") {
-        document.title() shouldBe title
-      }
-
-      withClue("result page header") {
-        document.select("h2").text().trim shouldBe s"Reply to customer with SA-UTR $utr"
-      }
-
-      withClue("result message") {
-        val creationResult = document.select("p.alert__message")
-        creationResult should have size 1
-        creationResult.get(0).text() shouldBe message
-      }
-    }
-  }
 
   implicit class ReturnsRedirectTo(result: Future[Result]) {
     def returnsRedirectTo(url: String) = {
