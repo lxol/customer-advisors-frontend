@@ -49,23 +49,5 @@ object SecureMessageCreatorV2 {
       recipientEmail,
       recipientNameLine1,
       messageType)
-  // val externalReference = ExternalReferenceV2("123412342314", "sees")
-  // val messageType = "fhddsAlertMessage"
-
-  // val validFrom = DateTimeUtils.now.toLocalDate
-  // val uncleanSubject = "This is a response to your HMRC request<script>alert('hax')</script>"
-  // // val content = new String(Base64.encodeBase64("<p>This is the content of the secure message</p>".getBytes("UTF-8")))
-  // val content = "<p>This is the content of the secure message</p>"
-  // // val uncleanContent = "<p>This is the content of the secure message</p><script>alert('more hax')</script>"
-  // val recipientNameLine1 = "Mr. John Smith"
-  // val taxpayerName = TaxpayerName(recipientNameLine1)
-  // val recipientEmail = "foo@bar.com"
-  // val recipientTaxidentifierName = "HMRC-OBTDS-ORG"
-  // val recipientTaxidentifierValue = "XZFH00000100024"
-  // val taxIdentifier = FHDDSTaxIdentifier(recipientTaxidentifierValue, recipientTaxidentifierName)
-  // val recipient = RecipientV2(taxIdentifier, taxpayerName, recipientEmail)
-
-  // val message = SecureMessageV2(recipient, externalReference, messageType, subject, content, validFrom)
-  // val uncleanMessage = SecureMessageV2(recipient, externalReference, messageType, uncleanSubject, uncleanContent, validFrom)
 
 }
