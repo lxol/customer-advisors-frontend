@@ -55,28 +55,26 @@ trait MessageStubV2 {
     givenThat(
       post(urlEqualTo(messageEndpoint))
         .withRequestBody(
-          // matching(".*")
-  // val uncleanContent = new String(Base64.encodeBase64("<p>This is the content of the secure message</p><script>alert('more hax')</script>".getBytes("UTF-8")))
           equalToJson(
             {
             val foo = s"""
                |{"recipient":
                | {"taxIdentifier":
-               |  {"value":"XZFH00000100024",
-               |   "name":"HMRC-OBTDS-ORG"
+               |  {"value":"${request.recipient.taxIdentifier.value}",
+               |   "name":"${request.recipient.taxIdentifier.name}"
                |  },
                |  "name":
-               |  {"line1":"Mr. John Smith"},
-               |  "email":"foo@bar.com"},
+               |  {"line1":"${request.recipient.name.line1}"},
+               |  "email":"${request.recipient.email}"},
                | "externalRef":
                | {
                |  "source":"customer-advisor"
                | },
-               | "messageType":"fhddsAlertMessage",
-               | "subject":"This is a response to your HMRC request<script>alert('hax')</script>",
-               | "content":"UEhBK1ZHaHBjeUJwY3lCMGFHVWdZMjl1ZEdWdWRDQnZaaUIwYUdVZ2MyVmpkWEpsSUcxbGMzTmhaMlU4TDNBK1BITmpjbWx3ZEQ1aGJHVnlkQ2duYlc5eVpTQm9ZWGduS1R3dmMyTnlhWEIwUGc9PQ==",
-               | "validFrom":"2018-07-09",
-               | "alertQueue":"PRIORITY"
+               | "messageType":"${request.messageType}",
+               | "subject":"${request.subject}",
+               | "content":"${new String(Base64.encodeBase64(request.content.getBytes("UTF-8")))}",
+               | "validFrom":"${request.validFrom}",
+               | "alertQueue":"${request.alertQueue}"
                |}
          """.stripMargin
               Logger.info(s"****** request to compareTo: ${foo}")
@@ -84,7 +82,8 @@ trait MessageStubV2 {
               },
             JSONCompareMode.LENIENT
           )
-        )//.withRequestBody(matchingJsonPath("$.recipient.externalRef.id =~ /[a-b0-9-]*/"))
+        )
+        .withRequestBody(matchingJsonPath("$.externalRef.id"))
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
   }
 }
