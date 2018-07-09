@@ -17,13 +17,13 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import play.api.mvc._
 
-@import uk.gov.hmrc.contactadvisors.domain.Advice
-@(adviceForm: Form[Advice])(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig )
+@import uk.gov.hmrc.contactadvisors.domain.AdviceV2
+@(adviceForm: Form[AdviceV2])(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig )
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Contact Advisor Response Form V2", bodyClasses = None) {
     <h2>Please complete and submit the form below in order to reply to </h2>
 
-    @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submit("asdfasdf"), 'id -> "form-submit-customer-advice") {
+    @form(action = uk.gov.hmrc.contactadvisors.controllers.routes.SecureMessageController.submitV2(), 'id -> "form-submit-customer-advice") {
         <fieldset>
             <div class="form-field">
             @textArea(
@@ -38,43 +38,38 @@
                 adviceForm("subject"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
                 '_label -> "Subject"
             )
             </div>
             <div class="form-field">
             @input(
-                adviceForm("recipient_taxidentifier_name"),
+                adviceForm("recipientTaxidentifierName"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
             '_label -> "Recipient TaxIdentifier Name"
             )
             </div>
             <div class="form-field">
             @input(
-                adviceForm("recipient_taxidentifier_value"),
+                adviceForm("recipientTaxidentifierValue"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
             '_label -> "Recipient TaxIdentifier Value"
             )
             </div>
             <div class="form-field">
             @input(
-                adviceForm("recipient_email"),
+                adviceForm("recipientEmail"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
                 '_label -> "Recipient Email"
             )
             </div>
             <div class="form-field">
             @input(
-                adviceForm("recipient_name_line1"),
+                adviceForm("recipientNameLine1"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
                 '_label -> "Recipient Name Line1"
             )
             </div>
@@ -83,7 +78,6 @@
                 adviceForm("messageType"),
                 '_divClass -> "form-field",
                 '_inputClass -> "input--medium input--cleared",
-                'parentField -> adviceForm("advice"),
                 '_label -> "MessageType"
             )
             </div>
