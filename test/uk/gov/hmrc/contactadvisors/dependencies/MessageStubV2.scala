@@ -87,25 +87,3 @@ trait MessageStubV2 {
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
   }
 }
-
-               // |{
-               // |  "recipient": {
-               // |    "taxIdentifier": {
-               // |      "value": "${request.recipient.taxIdentifier.value}",
-               // |      "name": "${request.recipient.taxIdentifier.name}"
-               // |    },
-               // |    "name": {
-               // |      "line1": "${request.recipient.name.line1}"
-               // |    },
-               // |    "email":"${request.recipient.email}"
-               // |  },
-               // |  "externalRef": {
-               // |    "id": "${request.externalRef.id}",
-               // |    "source": "${request.externalRef.source}"
-               // |  },
-               // |  "messageType": "${request.messageType}",
-               // |  "subject": "${request.subject}",
-               // |  "content": "${new String(Base64.encodeBase64(request.content.getBytes("UTF-8")))}",
-               // |  "validFrom": "${request.validFrom}",
-               // |  "alertQueue":"${request.alertQueue}"
-               // |}
