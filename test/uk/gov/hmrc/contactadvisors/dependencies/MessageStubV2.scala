@@ -61,7 +61,7 @@ trait MessageStubV2 {
                  |  "email":"${advice.recipientEmail}"},
                  | "externalRef":
                  | {
-                 |  "source":"customer-advisor"
+                 |  "source":"sees"
                  | },
                  | "messageType":"${advice.messageType}",
                  | "subject":"${advice.subject}",
