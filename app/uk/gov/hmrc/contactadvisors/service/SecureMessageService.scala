@@ -57,5 +57,22 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
     val details = Details(formId = "CA001", statutory = false, paperSent = false, batchId = None)
     SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
   }
-}
 
+  def createMessageV2(advice: AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
+    messageConnector.createV2(secureMessageFromV2(advice, externalReference))
+  }
+
+
+  def secureMessageFromV2(advice: AdviceV2, externalReference: ExternalReferenceV2): SecureMessageV2 = {
+    val taxpayerName = TaxpayerName(advice.recipientNameLine1)
+    val taxIdentifier = FHDDSTaxIdentifier(advice.recipientTaxidentifierValue, advice.recipientTaxidentifierName)
+    val recipient = RecipientV2(taxIdentifier, taxpayerName, advice.recipientEmail)
+    val messageType = advice.messageType
+    val subject = advice.subject
+    val content = new String(Base64.encodeBase64(advice.content.getBytes("UTF-8")))
+    val validFrom = DateTime.now().toLocalDate
+
+    SecureMessageV2(recipient, externalReference, messageType, subject, content, validFrom)
+  }
+
+}
