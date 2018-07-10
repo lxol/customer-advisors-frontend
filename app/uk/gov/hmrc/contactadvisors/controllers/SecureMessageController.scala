@@ -76,7 +76,6 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 
   def submitV2() =
     Action.async { implicit request => {
-      Logger.info(s"******* V2RequestBody: ${request.body}")
       adviceFormV2.bindFromRequest.fold(
         formWithErrors => Future.successful(
           {
@@ -234,7 +233,7 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
         }.
         foreach { ev =>
           auditConnector.sendEvent(ev).onFailure {
-            case err => Logger.error("Could not audit event", err)
+            case err => Logger.error("Could not audit event")
           }
         }
     }
