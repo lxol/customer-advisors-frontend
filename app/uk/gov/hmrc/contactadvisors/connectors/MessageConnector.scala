@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import play.mvc.Http.Status
-import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
+import uk.gov.hmrc.contactadvisors.connectors.models.{SecureMessage, SecureMessageV2}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -57,6 +57,24 @@ class MessageConnector @Inject()(http: HttpClient,
         case ex => UnexpectedError(ex.getMessage)
       }
   }
+
+  def createV2(secureMessage: SecureMessageV2)
+              (implicit hc: HeaderCarrier): Future[StorageResult] = {
+
+    implicit val messageFormats = MessageResponse.formats
+
+    val createMessageAPIurl: String = s"$serviceUrl/messages"
+
+    http.POST[SecureMessageV2, MessageResponse](url = createMessageAPIurl, body = secureMessage).
+      map {
+        case MessageResponse(messageId) => AdviceStored(messageId)
+      }.
+      recover {
+        case Upstream4xxResponse(conflictMessage, Status.CONFLICT, _, _) => AdviceAlreadyExists
+        case ex => UnexpectedError(ex.getMessage)
+      }
+  }
+
 }
 
 case class MessageResponse(id: String)
@@ -64,3 +82,4 @@ case class MessageResponse(id: String)
 object MessageResponse {
   implicit val formats = Json.format[MessageResponse]
 }
+
