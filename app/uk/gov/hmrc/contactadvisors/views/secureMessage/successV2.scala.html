@@ -17,18 +17,18 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import play.api.mvc._
 
-@(recipientTaxidentifierValue:String, messageId:String, externalRef: String)(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig, flash: Flash)
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Advice creation successful", bodyClasses = None) {
 
-    <!-- <h2>Reply to customer with Recipient </h2> -->
+    <h2>Success</h2>
     <div class="alert alert--success" role="alert">
         <p class="alert__message">
-           Secure inbox message successfully created for :
+           Secure inbox message created
            <ul>
-             <li>FHDDS Reference: @recipientTaxidentifierValue</li>
-             <li>Id: @messageId</li>
-             <li>External Ref: @externalRef</li>
+             <li>FHDDS Reference: @flash.get("taxid").getOrElse("unknown")</li>
+             <li>Id: @flash.get("messageId").getOrElse("unknown")</li>
+             <li>External Ref: @flash.get("externalRef").getOrElse("unknown")</li>
            </ul>
         </p>
     </div>
