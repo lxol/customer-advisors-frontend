@@ -92,8 +92,15 @@ class ApiISpec extends UnitSpec
       withClue("result page title") {
         document.title() shouldBe "Unexpected error"
       }
+
       withClue("result page title") {
-        document.select("p.alert__message").text() shouldBe (s"There is an unexpected problem. Secure inbox message has not been created for FHDDS Reference ${fhddsRef}")
+        document.title() shouldBe "Unexpected error"
+      }
+      withClue("result page h2") {
+        document.select("h2").text().trim shouldBe s"Failed"
+      }
+      withClue("result page alert message") {
+        document.select("p.alert__message").text() should include (s"${fhddsRef}")
       }
     }
   }

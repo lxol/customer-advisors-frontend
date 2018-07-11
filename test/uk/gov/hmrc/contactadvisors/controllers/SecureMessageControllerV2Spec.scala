@@ -260,10 +260,7 @@ class SecureMessageControllerV2Spec
   }
   "submission result page" should {
     "contain correct message for success" in {
-      val result = controller.successV2("FHDDS_REF", "234234", "1234-223423")(getRequest)
-      //   "Advice creation successful", 
-      //   "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
-      // )
+      val result = controller.successV2()(getRequest)
 
       status(result) shouldBe 200
       contentType(result) shouldBe Some("text/html")
@@ -274,18 +271,12 @@ class SecureMessageControllerV2Spec
       withClue("result page title") {
         document.title() shouldBe "Advice creation successful"
       }
-      withClue("result page FHDDS Reference") {
-        document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: FHDDS_REF"
-      }
-      withClue("result page Message Id") {
-        document.select("ul li").get(1).text() should startWith regex "Id: [0-9a-f]+"
-      }
-      withClue("result page External Ref") {
-        document.select("ul li").get(2).text() should startWith regex "External Ref: [0-9a-f-]+"
+      withClue("result page h2") {
+        document.select("h2").text().trim shouldBe s"Success"
       }
     }
     "contain correct message for duplicate" in {
-      val result = controller.duplicateV2("FHDDS_REF")(getRequest)
+      val result = controller.duplicateV2()(getRequest)
       status(result) shouldBe 200
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
@@ -298,7 +289,7 @@ class SecureMessageControllerV2Spec
     }
 
     "contain correct message for unexpected error" in {
-      val result = controller.unexpected("FHDDS_REF")(getRequest)
+      val result = controller.unexpectedV2()(getRequest)
       status(result) shouldBe 200
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
@@ -307,6 +298,9 @@ class SecureMessageControllerV2Spec
 
       withClue("result page title") {
         document.title() shouldBe "Unexpected error"
+      }
+      withClue("result page h2") {
+        document.select("h2").text().trim shouldBe s"Failed"
       }
     }
   }

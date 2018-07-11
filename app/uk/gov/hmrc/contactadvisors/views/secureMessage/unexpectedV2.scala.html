@@ -17,14 +17,16 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import play.api.mvc._
 
-@(recipientTaxidentifierValue:String)(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, appConfig : uk.gov.hmrc.contactadvisors.FrontendAppConfig, flash: Flash)
 
 @uk.gov.hmrc.contactadvisors.views.html.main_template(title = "Unexpected error", bodyClasses = None) {
 
-    <h2>Reply to customer with SA-UTR </h2>
+    <h2>Failed</h2>
     <div class="alert alert--failure" role="alert">
         <p class="alert__message">
-          There is an unexpected problem. Secure inbox message has not been created for FHDDS Reference @recipientTaxidentifierValue
+          There is an unexpected problem.
+          Secure inbox message has not been created for FHHDS Reference
+          @flash.get("taxid").getOrElse("unknown")
         </p>
     </div>
 
