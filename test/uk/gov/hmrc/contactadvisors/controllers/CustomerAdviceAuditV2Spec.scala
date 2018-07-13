@@ -53,8 +53,22 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       val event = dataEventCaptor.getValue
       event.auditSource shouldBe "customer-advisors-frontend"
       event.auditType shouldBe "TxSucceeded"
-      event.detail.get("messageId").get shouldBe "1234"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Stored"
+
+
+      withClue("event TransactionName") {
+        event.tags.get(EventKeys.TransactionName) should not {be (None)}
+        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Stored"
+      }
+
+      withClue("event messageId") {
+        event.detail.get("messageId") should not {be (None)}
+        event.detail.get("messageId").get shouldBe "1234"
+      }
+
+      withClue("event externalRef") {
+        event.detail.get("externalRef") should not {be (None)}
+        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+      }
     }
 
     "audit the duplicate message event" in new TestCaseV2 {
