@@ -87,7 +87,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 
           val externalReference = ExternalReferenceV2(generateExternalRefID)
           val result = secureMessageService.createMessageV2(advice, externalReference)
-          customerAdviceAudit.auditAdviceV2(result)
+          customerAdviceAudit.auditAdviceV2(result, advice, externalReference)
           result.map {
             handleStorageResultV2(advice.recipientTaxidentifierValue, externalReference.id)
           }
@@ -215,7 +215,7 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
     }
   }
 
-  def auditAdviceV2(result: Future[StorageResult])(implicit hc: HeaderCarrier): Unit = {
+  def auditAdviceV2(result: Future[StorageResult], advice:AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier): Unit = {
     def createEvent(messageInfo: Map[String, String], auditType: String, transactionName: String) =
       DataEvent(
         auditSource = auditSource,
