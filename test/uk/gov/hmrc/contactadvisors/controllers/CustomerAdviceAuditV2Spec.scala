@@ -58,7 +58,7 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
     }
 
     "audit the duplicate message event" in new TestCaseV2 {
-      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessageV2(any(), any())(any(), any()))
         .thenReturn(Future.successful(AdviceAlreadyExists))
 
       controller.submitV2()(request).futureValue
@@ -74,45 +74,12 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
     }
 
-    "audit the unknown tax id event" in new TestCaseV2 {
-      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
-        .thenReturn(Future.successful(UnknownTaxId))
-
-      controller.submit("123456789")(request).futureValue
-
-      eventually {
-        verify(auditConnectorMock).sendEvent(dataEventCaptor.capture())(any(), any())
-      }
-
-      val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Unknown Tax Id"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
-    }
-
-    "audit the user not paperless event" in new TestCaseV2 {
-      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
-        .thenReturn(Future.successful(UserIsNotPaperless))
-
-      controller.submit("123456789")(request).futureValue
-
-      eventually {
-        verify(auditConnectorMock).sendEvent(dataEventCaptor.capture())(any(), any())
-      }
-
-      val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "User is not paperless"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
-    }
 
     "audit the unexpected error event" in new TestCaseV2 {
-      when(secureMessageServiceMock.createMessage(any(), any())(any(), any()))
+      when(secureMessageServiceMock.createMessageV2(any(), any())(any(), any()))
         .thenReturn(Future.successful(UnexpectedError("this is the reason")))
 
-      controller.submit("123456789")(request).futureValue
+      controller.submitV2()(request).futureValue
 
       eventually {
         verify(auditConnectorMock).sendEvent(dataEventCaptor.capture())(any(), any())
