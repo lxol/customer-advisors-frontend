@@ -220,6 +220,7 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
       DataEvent(
         auditSource = auditSource,
         auditType = auditType,
+        eventId = externalReference.id,
         tags = Map(EventKeys.TransactionName -> transactionName),
         detail = Map(
         ) ++ messageInfo
@@ -231,10 +232,9 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
           createEvent(Map(
             "secureMessageId" -> messageId,
             "messageId" -> messageId,
-            "taxidentifierValue" -> advice.recipientTaxidentifierValue,
-            "externalRef" -> externalReference.id
+            "fhdds Ref" -> advice.recipientTaxidentifierValue
           ),
-            EventTypes.Succeeded, "Message Stored")
+            EventTypes.Succeeded, "Message Created")
         case AdviceAlreadyExists => createEvent(Map("reason" -> "Duplicate Message Found"), EventTypes.Failed, "Message Not Stored")
         case UnexpectedError(errorMessage) => createEvent(Map("reason" -> s"Unexpected Error: ${errorMessage}"), EventTypes.Failed, "Message Not Stored")
         case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")

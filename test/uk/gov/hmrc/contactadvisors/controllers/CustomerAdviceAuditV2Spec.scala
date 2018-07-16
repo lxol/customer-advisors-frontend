@@ -55,9 +55,9 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       event.auditType shouldBe "TxSucceeded"
 
 
-      withClue("event TransactionName") {
+      withClue("event transactionName") {
         event.tags.get(EventKeys.TransactionName) should not {be (None)}
-        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Stored"
+        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Created"
       }
 
       withClue("event messageId") {
@@ -65,15 +65,20 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
         event.detail.get("messageId").get shouldBe "1234"
       }
 
-      withClue("event externalRef") {
-        event.detail.get("externalRef") should not {be (None)}
-        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+      withClue("event fhdds Ref") {
+        event.detail.get("fhdds Ref") should not {be (None)}
+        event.detail.get("fhdds Ref").get should include regex ("XZFH00000100024")
       }
 
-      withClue("event taxidentifierValue") {
-        event.detail.get("taxidentifierValue") should not {be (None)}
-        event.detail.get("taxidentifierValue").get should include regex ("XZFH00000100024")
+      withClue("event secureMessageId") {
+        event.detail.get("secureMessageId") should not {be (None)}
+        event.detail.get("secureMessageId").get shouldBe "1234"
       }
+
+      withClue("event eventId") {
+        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+      }
+
     }
 
     "audit the duplicate message event" in new TestCaseV2 {
@@ -148,3 +153,52 @@ trait TestCaseV2 extends MockitoSugar {
       "alertQueue" -> "PRIORITY"
   )
 }
+
+// Message Created
+// {
+//    "auditSource":"customer-advisors-frontend",
+//    "auditType":"TxSucceeded",
+//    "detail":{
+//       "messageId":"Event_ID",
+//       "fhdds Ref":"recipient.taxIdentifier.name",
+//       "secureMessageId":"Event_ID",
+//    },
+//    "eventId":"EXTERNAL_REF",
+//    "generatedAt":"2018-07-13T09:17:04.077Z"
+//    "tags":{
+//       "transactionName":"Message Created"
+//    }
+// }
+// Message Duplicated
+// {
+//    "auditSource":"customer-advisors-frontend",
+//    "auditType":"TxSucceeded",
+//    "detail":{
+//       "messageId":"Event_ID",
+//       "fhdds Ref":"recipient.taxIdentifier.name",
+//       "secureMessageId":"EVENT_ID"
+//    },
+//    "eventId":"EXTERNAL_REF",
+//    "generatedAt":"2018-07-13T09:17:04.077Z"
+//    "tags":{
+//       "transactionName":"Message Duplicate Request"
+//    }
+// }
+// Message not Created - Unexpected problem
+// {
+//    "auditSource":"customer-advisors-frontend",
+//    "auditType":"TxFailed",
+//    "detail":{
+//       "messageId":"",
+//       "fhdds Ref":"recipient.taxIdentifier.name",
+//       "secureMessageId":"",
+//       "reason":"errorMessage"
+//    },
+//    "eventId":"EXTERNAL_REF",
+//    "generatedAt":"2018-07-13T09:17:04.077Z"
+//    "tags":{
+//       "transactionName":"Message Not Created"
+//    }
+// }
+
+// looking at the following ... some slight tweaks (I think!)
