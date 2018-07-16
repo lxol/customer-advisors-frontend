@@ -69,6 +69,11 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
         event.detail.get("externalRef") should not {be (None)}
         event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
       }
+
+      withClue("event taxidentifierValue") {
+        event.detail.get("taxidentifierValue") should not {be (None)}
+        event.detail.get("taxidentifierValue").get should include regex ("XZFH00000100024")
+      }
     }
 
     "audit the duplicate message event" in new TestCaseV2 {

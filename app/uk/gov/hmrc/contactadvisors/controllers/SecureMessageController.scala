@@ -231,6 +231,7 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
           createEvent(Map(
             "secureMessageId" -> messageId,
             "messageId" -> messageId,
+            "taxidentifierValue" -> advice.recipientTaxidentifierValue,
             "externalRef" -> externalReference.id
           ),
             EventTypes.Succeeded, "Message Stored")
