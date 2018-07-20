@@ -17,6 +17,7 @@
 package uk.gov.hmrc.contactadvisors.controllers
 
 import java.util.UUID
+
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.data.Forms._
@@ -87,7 +88,7 @@ class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit
 
           val externalReference = ExternalReferenceV2(generateExternalRefID)
           val result = secureMessageService.createMessageV2(advice, externalReference)
-          customerAdviceAudit.auditAdviceV2(result)
+          customerAdviceAudit.auditAdviceV2(result, advice, externalReference)
           result.map {
             handleStorageResultV2(advice.recipientTaxidentifierValue, externalReference.id)
           }
@@ -215,7 +216,7 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
     }
   }
 
-  def auditAdviceV2(result: Future[StorageResult])(implicit hc: HeaderCarrier): Unit = {
+  def auditAdviceV2(result: Future[StorageResult], advice: AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier): Unit = {
     def createEvent(messageInfo: Map[String, String], auditType: String, transactionName: String) =
       DataEvent(
         auditSource = auditSource,
@@ -227,7 +228,26 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
 
     result.onComplete { res1 =>
       res1.map {
-        case AdviceStored(messageId) => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
+        case AdviceStored(messageId) =>
+          createEvent(Map(
+            "messageType" -> advice.messageType,
+            "messageId" -> messageId,
+            "externalRef" -> externalReference.id,
+            "fhddsRef" -> advice.recipientTaxidentifierValue
+          ),
+            EventTypes.Succeeded, "Message Created")
+        case AdviceAlreadyExists => createEvent(Map(
+          "messageType" -> advice.messageType,
+          "messageId" -> "",
+          "externalRef" -> externalReference.id,
+          "fhddsRef" -> advice.recipientTaxidentifierValue
+        ), EventTypes.Succeeded, "Message Duplicate Request")
+        case UnexpectedError(errorMessage) => createEvent(Map(
+          "messageType" -> advice.messageType,
+          "messageId" -> "",
+          "externalRef" -> externalReference.id,
+          "fhddsRef" -> advice.recipientTaxidentifierValue,
+          "reason" -> s"${errorMessage}"), EventTypes.Failed, "Message Not Created")
         case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")
       }.
         recover { case ex =>
