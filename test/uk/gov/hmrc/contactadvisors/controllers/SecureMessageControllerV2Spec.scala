@@ -234,7 +234,7 @@ class SecureMessageControllerV2Spec
         )
       )
 
-      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/duplicateV2"
+      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/duplicate"
     }
 
     "redirect and indicate an unexpected error has occurred when processing the submission" in {
@@ -253,7 +253,7 @@ class SecureMessageControllerV2Spec
         )
       )
 
-      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/unexpectedV2"
+      xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/unexpected"
     }
 
 
