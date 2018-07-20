@@ -220,7 +220,6 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
       DataEvent(
         auditSource = auditSource,
         auditType = auditType,
-        eventId = externalReference.id,
         tags = Map(EventKeys.TransactionName -> transactionName),
         detail = Map(
         ) ++ messageInfo
@@ -230,13 +229,24 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
       res1.map {
         case AdviceStored(messageId) =>
           createEvent(Map(
-            "secureMessageId" -> messageId,
+            "messageType" -> advice.messageType,
             "messageId" -> messageId,
-            "fhdds Ref" -> advice.recipientTaxidentifierValue
+            "externalRef" -> externalReference.id,
+            "fhddsRef" -> advice.recipientTaxidentifierValue
           ),
             EventTypes.Succeeded, "Message Created")
-        case AdviceAlreadyExists => createEvent(Map("reason" -> "Duplicate Message Found"), EventTypes.Failed, "Message Not Stored")
-        case UnexpectedError(errorMessage) => createEvent(Map("reason" -> s"Unexpected Error: ${errorMessage}"), EventTypes.Failed, "Message Not Stored")
+        case AdviceAlreadyExists => createEvent(Map(
+            "messageType" -> advice.messageType,
+            "messageId" -> "",
+            "externalRef" -> externalReference.id,
+            "fhddsRef" -> advice.recipientTaxidentifierValue
+        ), EventTypes.Succeeded, "Message Duplicate Request")
+        case UnexpectedError(errorMessage) => createEvent(Map(
+            "messageType" -> advice.messageType,
+            "messageId" -> "",
+            "externalRef" -> externalReference.id,
+            "fhddsRef" -> advice.recipientTaxidentifierValue,
+            "reason" -> s"${errorMessage}"), EventTypes.Failed, "Message Not Created")
         case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")
       }.
         recover { case ex =>

@@ -51,34 +51,40 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxSucceeded"
 
-
-      withClue("event transactionName") {
+      withClue("event auditSource") {
+        event.auditSource shouldBe "customer-advisors-frontend"
+      }
+      withClue("event auditType") {
+        event.auditType shouldBe "TxSucceeded"
+      }
+      withClue("event eventId") {
+        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+      }
+      withClue("event tags.transactionName") {
         event.tags.get(EventKeys.TransactionName) should not {be (None)}
         event.tags.get(EventKeys.TransactionName).get shouldBe "Message Created"
       }
 
-      withClue("event messageId") {
+      withClue("event detail.messageId") {
         event.detail.get("messageId") should not {be (None)}
         event.detail.get("messageId").get shouldBe "1234"
       }
 
-      withClue("event fhdds Ref") {
-        event.detail.get("fhdds Ref") should not {be (None)}
-        event.detail.get("fhdds Ref").get should include regex ("XZFH00000100024")
+      withClue("event details.externalRef") {
+        event.detail.get("externalRef") should not {be (None)}
+        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
       }
 
-      withClue("event secureMessageId") {
-        event.detail.get("secureMessageId") should not {be (None)}
-        event.detail.get("secureMessageId").get shouldBe "1234"
+      withClue("event detail.fhddsRef") {
+        event.detail.get("fhddsRef") should not {be (None)}
+        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
       }
 
-      withClue("event eventId") {
-        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+      withClue("event detail.messageType") {
+        event.detail.get("messageType") should not {be (None)}
+        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
       }
-
     }
 
     "audit the duplicate message event" in new TestCaseV2 {
@@ -92,10 +98,41 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Duplicate Message Found"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+
+      withClue("event auditSource") {
+        event.auditSource shouldBe "customer-advisors-frontend"
+      }
+      withClue("event auditType") {
+        event.auditType shouldBe "TxSucceeded"
+      }
+      withClue("event eventId") {
+        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+      }
+      withClue("event tags.transactionName") {
+        event.tags.get(EventKeys.TransactionName) should not {be (None)}
+        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Duplicate Request"
+      }
+
+      withClue("event detail.messageId") {
+        event.detail.get("messageId") should not {be (None)}
+        event.detail.get("messageId").get shouldBe ""
+      }
+
+      withClue("event detal.fhddsRef") {
+        event.detail.get("fhddsRef") should not {be (None)}
+        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
+      }
+
+      withClue("event details.externalRef") {
+        event.detail.get("externalRef") should not {be (None)}
+        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+      }
+
+      withClue("event detail.messageType") {
+        event.detail.get("messageType") should not {be (None)}
+        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
+      }
+
     }
 
 
@@ -110,10 +147,45 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Unexpected Error: this is the reason"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+
+      withClue("event auditSource") {
+        event.auditSource shouldBe "customer-advisors-frontend"
+      }
+      withClue("event auditType") {
+        event.auditType shouldBe "TxFailed"
+      }
+      withClue("event eventId") {
+        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+      }
+      withClue("event tags.transactionName") {
+        event.tags.get(EventKeys.TransactionName) should not {be (None)}
+        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Created"
+      }
+
+      withClue("event detail.messageId") {
+        event.detail.get("messageId") should not {be (None)}
+        event.detail.get("messageId").get shouldBe ""
+      }
+
+      withClue("event detal.fhddsRef") {
+        event.detail.get("fhddsRef") should not {be (None)}
+        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
+      }
+
+      withClue("event details.externalRef") {
+        event.detail.get("externalRef") should not {be (None)}
+        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+      }
+
+      withClue("event detail.messageType") {
+        event.detail.get("messageType") should not {be (None)}
+        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
+      }
+
+      withClue("event detail.reason") {
+        event.detail.get("reason") should not {be (None)}
+        event.detail.get("reason").get shouldBe "this is the reason"
+      }
     }
   }
 }

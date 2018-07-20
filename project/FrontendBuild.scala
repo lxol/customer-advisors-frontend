@@ -32,9 +32,7 @@ private object AppDependencies {
     "org.scalatest"               %% "scalatest"                % "2.2.6" % "test,it",
     "org.pegdown"                 %  "pegdown"                  % "1.6.0" % "test,it",
     "org.mockito"                 %  "mockito-core"             % "1.9.0" % "test,it",
-    "org.scalatestplus.play"      %% "scalatestplus-play"       % "1.5.1" % "test,it",
+    "org.scalatestplus.play"      %% "scalatestplus-play"       % "2.0.1" % "test,it",
     "com.typesafe.play"           %% "play-test"                % PlayVersion.current % "test,it"
   )
 }
-
-
