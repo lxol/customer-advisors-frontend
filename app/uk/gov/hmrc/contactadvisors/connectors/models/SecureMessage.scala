@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.contactadvisors.connectors.models
 
-import org.joda.time.LocalDate
+import org.joda.time.{LocalDate}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Json, OFormat, _}
 import uk.gov.hmrc.domain.SaUtr
+import play.api.libs.json.JodaWrites.{JodaDateTimeWrites => _, _}
+import play.api.libs.json.JodaReads._
 
 final case class Details(formId: String, statutory: Boolean, paperSent: Boolean, batchId: Option[String])
 object Details {
@@ -45,6 +47,10 @@ object Recipient {
 case class SecureMessage(recipient: Recipient, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
 
 object SecureMessage {
+  implicit val dateFormatDefault = new Format[LocalDate] {
+    override def reads(json: JsValue): JsResult[LocalDate] = JodaReads.DefaultJodaLocalDateReads.reads(json)
+    override def writes(o: LocalDate): JsValue = JodaWrites.DefaultJodaLocalDateWrites.writes(o)
+  }
   implicit val formats = Json.format[SecureMessage]
 }
 
@@ -73,6 +79,10 @@ object ExternalReferenceV2 {
 }
 
 object SecureMessageV2 {
+  implicit val dateFormatDefault = new Format[LocalDate] {
+    override def reads(json: JsValue): JsResult[LocalDate] = JodaReads.DefaultJodaLocalDateReads.reads(json)
+    override def writes(o: LocalDate): JsValue = JodaWrites.DefaultJodaLocalDateWrites.writes(o)
+  }
   implicit val formats = Json.format[SecureMessageV2]
 }
 

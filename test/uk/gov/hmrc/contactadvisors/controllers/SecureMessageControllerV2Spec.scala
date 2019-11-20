@@ -19,24 +19,24 @@ package uk.gov.hmrc.contactadvisors.controllers
 import org.jsoup.Jsoup
 import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatestplus.play.OneServerPerSuite
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.mvc.Result
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.dependencies.MessageStubV2
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.{SecureMessageCreatorV2, WithWiremock}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class SecureMessageControllerV2Spec
-  extends UnitSpec
-    with OneServerPerSuite
+  extends PlaySpec
+    with GuiceOneAppPerSuite
     with ScalaFutures
     with IntegrationPatience
     with WithWiremock
@@ -51,34 +51,39 @@ class SecureMessageControllerV2Spec
   val recipientEmail = "foo@bar.com"
   val recipientNameLine1 = "Mr. John Smith"
   val messageType = "fhddsAlertMessage"
-
   val adviceBody = "<p>This is the content of the secure message</p>"
+  val messagesApi = app.injector.instanceOf[MessagesApi]
+  val appConfig = app.injector.instanceOf[FrontendAppConfig]
+  val controllerComponents = app.injector.instanceOf[MessagesControllerComponents]
+  val messageApi = app.injector.instanceOf[MessagesApi]
+  val customerAdviceAudit = app.injector.instanceOf[CustomerAdviceAudit]
+  val secureMessageService = app.injector.instanceOf[SecureMessageService]
 
-  val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]), app.injector.instanceOf(classOf[MessagesApi]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
+  val controller = new SecureMessageController(controllerComponents, customerAdviceAudit, secureMessageService, messageApi)(appConfig) {
     def auditSource: String = "customer-advisors-frontend"
   }
 
   "GET /customer-advisors-frontend/inbox" should {
     "return 200" in {
       val result = controller.inboxV2()(getRequest)
-      status(result) shouldBe Status.OK
+      status(result) must be(Status.OK)
     }
 
     "return HTML" in {
       val result = controller.inboxV2()(getRequest)
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
     }
 
     "show main banner" in {
       val result = controller.inboxV2()(getRequest)
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
     }
 
     "have the expected elements on the form" in {
       val result = controller.inboxV2()(getRequest)
-      status(result) shouldBe 200
+      status(result) must be(200)
 
       val document = Jsoup.parse(contentAsString(result))
       val form = document.select("form#form-submit-customer-advice").get(0)
@@ -88,19 +93,19 @@ class SecureMessageControllerV2Spec
       withClue("advice subject field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
       val adviceMessage = formElements.find(_.id() == "content")
       withClue("advice message field") {
-        adviceMessage.map(_.tagName()) shouldBe Some("textarea")
+        adviceMessage.map(_.tagName()) must be(Some("textarea"))
       }
 
       val submitAdvice = formElements.find(_.id() == "submit-advice")
       withClue("submit advice button") {
-        submitAdvice.map(_.tagName()) shouldBe Some("button")
-        submitAdvice.map(_.text()) shouldBe Some("Send")
+        submitAdvice.map(_.tagName()) must be(Some("button"))
+        submitAdvice.map(_.text()) must be(Some("Send"))
       }
 
 
@@ -108,7 +113,7 @@ class SecureMessageControllerV2Spec
       withClue("advice recipient taxidentifier name field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -116,7 +121,7 @@ class SecureMessageControllerV2Spec
       withClue("advice recipient taxidentifier value field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -124,7 +129,7 @@ class SecureMessageControllerV2Spec
       withClue("advice recipient email field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -132,7 +137,7 @@ class SecureMessageControllerV2Spec
       withClue("advice recipient name line1 field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -140,7 +145,7 @@ class SecureMessageControllerV2Spec
       withClue("advice messageType field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
     }
@@ -158,8 +163,8 @@ class SecureMessageControllerV2Spec
           "messageType" -> messageType
         )
       )
-      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptySubject) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala must have size 1
+      status(emptySubject) must be(BAD_REQUEST)
 
       val emptyMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
@@ -171,12 +176,12 @@ class SecureMessageControllerV2Spec
           "messageType" -> messageType
         )
       )
-      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptyMessage) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala must have size 1
+      status(emptyMessage) must be(BAD_REQUEST)
 
       val emptyFormFields = controller.submitV2()(FakeRequest())
-      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 7
-      status(emptyFormFields) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala must have size 7
+      status(emptyFormFields) must be(BAD_REQUEST)
     }
 
     "redirect to the success page when the form submission is successful" in {
@@ -262,45 +267,46 @@ class SecureMessageControllerV2Spec
     "contain correct message for success" in {
       val result = controller.successV2()(getRequest)
 
-      status(result) shouldBe 200
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      status(result) must be(200)
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+
+      document.getElementsByTag("header").attr("id") must be("global-header")
 
       withClue("result page title") {
-        document.title() shouldBe "Advice creation successful"
+        document.title() must be("Advice creation successful")
       }
       withClue("result page h2") {
-        document.select("h2").text().trim shouldBe s"Success"
+        document.select("h2").text().trim must include(s"Success")
       }
     }
     "contain correct message for duplicate" in {
       val result = controller.duplicateV2()(getRequest)
-      status(result) shouldBe 200
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      status(result) must be(200)
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
 
       withClue("result page title") {
-        document.title() shouldBe "Advice already exists"
+        document.title() must be("Advice already exists")
       }
     }
 
     "contain correct message for unexpected error" in {
       val result = controller.unexpectedV2()(getRequest)
-      status(result) shouldBe 200
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      status(result) must be(200)
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
 
       withClue("result page title") {
-        document.title() shouldBe "Unexpected error"
+        document.title() must be("Unexpected error")
       }
       withClue("result page h2") {
-        document.select("h2").text().trim shouldBe s"Failed"
+        document.select("h2").text().trim must include(s"Failed")
       }
     }
   }
@@ -318,18 +324,14 @@ class SecureMessageControllerV2Spec
     )
   )
 
-
   implicit class ReturnsRedirectTo(result: Future[Result]) {
     def returnsRedirectTo(url: String) = {
-      status(result) shouldBe 303
-
+      status(result) must be(303)
       redirectLocation(result) match {
-        case Some(redirect) => redirect should (startWith(s"/secure-message$url"))
+        case Some(redirect) => redirect must (startWith(s"/secure-message$url"))
         case _ => fail("redirect location should always be present")
       }
-
     }
   }
-
   override val dependenciesPort: Int = 10100
 }

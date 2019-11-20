@@ -20,63 +20,61 @@ import org.joda.time.DateTime
 import org.jsoup.Jsoup
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatestplus.play.PlaySpec
 import play.api.http.Status._
-import play.api.libs.ws.WS
+import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.it.{ExternalServiceRunner, MongoMicroServiceEmbeddedServer}
-import uk.gov.hmrc.play.test.UnitSpec
-
+import uk.gov.hmrc.integration.ServiceSpec
 import scala.concurrent.duration._
 
-class ApiISpec extends UnitSpec
+class ApiISpec extends PlaySpec
   with ScalaFutures
   with BeforeAndAfterAll
-  with Eventually {
-  self =>
+  with Eventually with ServiceSpec {
 
-  lazy val server: CustomerAdvisorsIntegrationServer =
-    CustomerAdvisorsIntegrationServer.server
+  val externalServices = CustomerAdvisorsIntegrationServer.allExternalServices
 
-  def resource(path: String): String = server.resource(path)
+  override  val additionalConfig: Map[String, Any] = Map(
+    "Dev.microservice.services.customer-advisors-frontend.port" -> port,
+    "ws.timeout.idle" -> "600000"
+  )
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
-      server.start()
-    }
-  }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    if (!CustomerAdvisorsIntegrationServer.serverControlledByItSuite) {
-      server.stop()
-    }
-  }
+  protected def startTimeout = 240.seconds
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit lazy val app = play.api.Play.current
 
   "POST /customer-advisors-frontend/submit" should {
     "redirect to the success page when the form submission is successful" in {
-
       val content = DateTime.now().toString
       val fhddsRef = "XZFH00000100024"
-      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=${fhddsRef}&recipientEmail=foo@domain.com&recipientNameLine1=rLine1&messageType=mType")
-      val response = WS.url(p).post("")
-      response.status shouldBe OK
-      val body = response.futureValue.body
-      val document = Jsoup.parse(body)
+      val wsClient = app.injector.instanceOf[WSClient]
+      val response = wsClient.url(resource("secure-message/customer-advisors-frontend/submit")).post(Map(
+        "content" -> s"${content}21",
+        "subject" -> "mysubject",
+        "recipientTaxidentifierName" -> "sautr",
+        "recipientTaxidentifierValue" -> fhddsRef,
+        "recipientEmail" -> "test@test.com",
+        "recipientNameLine1" -> "line1",
+        "messageType" -> "mType"
+      )).futureValue
+
+    response.status must be(OK)
+
+    val body =  response.body
+
+    val document = Jsoup.parse(body)
+
       withClue("result page title") {
-        document.title() shouldBe "Advice creation successful"
+        document.title() must be("Advice creation successful")
       }
       withClue("result page FHDDS Reference") {
-        document.select("ul li").get(0).text() shouldBe s"FHDDS Reference: ${fhddsRef}"
+        document.select("ul li").get(0).text() must be(s"FHDDS Reference: ${fhddsRef}")
       }
       withClue("result page Message Id") {
-        document.select("ul li").get(1).text() should startWith regex "Id: [0-9a-f]+"
+        document.select("ul li").get(1).text() must startWith regex "Id: [0-9a-f]+"
       }
       withClue("result page External Ref") {
-        document.select("ul li").get(2).text() should startWith regex "External Ref: [0-9a-f-]+"
+        document.select("ul li").get(2).text() must startWith regex "External Ref: [0-9a-f-]+"
       }
     }
     "redirect to the unexpected page when the form submission is unsuccessful" in {
@@ -84,43 +82,36 @@ class ApiISpec extends UnitSpec
       val content = DateTime.now().toString
       val fhddsRef = "XZFH00000100024"
       val wrongEmail = "foobar"
-      val p = resource(s"secure-message/customer-advisors-frontend/submit?content=${content}21&subject=mysubject&recipientTaxidentifierName=sautr&recipientTaxidentifierValue=${fhddsRef}&recipientEmail=${wrongEmail}&recipientNameLine1=rLine1&messageType=mType")
-      val response = WS.url(p).post("")
-      response.status shouldBe OK
-      val body = response.futureValue.body
+      val wsClient = app.injector.instanceOf[WSClient]
+
+      val response = wsClient.url(resource("secure-message/customer-advisors-frontend/submit")).post(Map(
+        "content" -> s"${content}21",
+        "subject" -> "mysubject",
+        "recipientTaxidentifierName" -> "sautr",
+        "recipientTaxidentifierValue" -> s"${fhddsRef}",
+        "recipientEmail" -> s"${wrongEmail}",
+        "recipientNameLine1" -> "rLine1",
+        "messageType" -> "mType"
+      )).futureValue
+
+      response.status must be(OK)
+      val body = response.body
       val document = Jsoup.parse(body)
       withClue("result page title") {
-        document.title() shouldBe "Unexpected error"
+        document.title() must be("Unexpected error")
       }
 
       withClue("result page title") {
-        document.title() shouldBe "Unexpected error"
+        document.title() must be("Unexpected error")
       }
       withClue("result page h2") {
-        document.select("h2").text().trim shouldBe s"Failed"
+        document.select("h2").text().trim must include(s"Failed")
       }
       withClue("result page alert message") {
-        document.select("p.alert__message").text() should include (s"${fhddsRef}")
+        document.select("p.alert__message").text() must include (s"${fhddsRef}")
       }
     }
   }
-}
-
-class CustomerAdvisorsIntegrationServer(override val testName: String,
-                                        servicesFromJar: Seq[String],
-                                        servicesFromSource: Seq[String],
-                                        scenarioAdditionalConfig: Map[String, Any])
-  extends MongoMicroServiceEmbeddedServer {
-
-  override val externalServices = servicesFromJar.map(ExternalServiceRunner.
-    runFromJar(_)) ++ servicesFromSource.map(ExternalServiceRunner.runFromSource(_))
-
-  override protected val additionalConfig: Map[String, Any] = Map(
-    "Dev.microservice.services.customer-advisors-frontend.port" -> servicePort,
-    "ws.timeout.idle" -> "600000"
-  ) ++ scenarioAdditionalConfig
-
-  override protected def startTimeout = 240.seconds
 }
 
 object CustomerAdvisorsIntegrationServer {
@@ -141,5 +132,4 @@ object CustomerAdvisorsIntegrationServer {
   )
   var serverControlledByItSuite = false
 
-  lazy val server = new CustomerAdvisorsIntegrationServer("ALL_CUSTOMER_ADVISORS_IT_TESTS", allExternalServices, Seq(), Map())
 }

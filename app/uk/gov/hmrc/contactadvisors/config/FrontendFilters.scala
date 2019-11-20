@@ -17,17 +17,16 @@
 package uk.gov.hmrc.contactadvisors.config
 
 import javax.inject.{Inject, Singleton}
-
 import com.kenshoo.play.metrics.MetricsFilter
 import play.api.Configuration
 import play.api.http.HttpFilters
 import play.filters.csrf.CSRFFilter
 import play.filters.headers.SecurityHeadersFilter
 import uk.gov.hmrc.play.bootstrap.filters.frontend._
-import uk.gov.hmrc.play.bootstrap.filters.frontend.crypto.CookieCryptoFilter
 import uk.gov.hmrc.play.bootstrap.filters.frontend.deviceid.DeviceIdFilter
 import uk.gov.hmrc.play.bootstrap.filters.CacheControlFilter
 import uk.gov.hmrc.play.bootstrap.filters.LoggingFilter
+import uk.gov.hmrc.play.filters.frontend.CookieCryptoFilter
 
 @Singleton
 class FrontendFilters @Inject()(
@@ -57,7 +56,7 @@ class FrontendFilters @Inject()(
   )
 
   lazy val enableSecurityHeaderFilter: Boolean =
-    configuration.getBoolean("security.headers.filter.enabled").getOrElse(true)
+    configuration.getOptional[Boolean]("security.headers.filter.enabled").getOrElse(true)
 
   override val filters =
     if (enableSecurityHeaderFilter) Seq(securityFilter) ++ frontendFilters else frontendFilters

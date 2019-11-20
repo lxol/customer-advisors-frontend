@@ -20,18 +20,18 @@ import org.apache.commons.codec.binary.Base64
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.play.PlaySpec
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
 import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutures {
+class SecureMessageServiceSpec extends PlaySpec with MockitoSugar with ScalaFutures {
 
   "createMessage" should {
 
@@ -45,7 +45,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
 
       val storageResult = secureMessageService.createMessage(advice, validSaUtr).futureValue
 
-      storageResult shouldBe AdviceAlreadyExists
+      storageResult must be(AdviceAlreadyExists)
     }
 
     "handle case when taxpayer is not paperless" in new TestCase {
@@ -55,7 +55,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
       val storageResult = secureMessageService.createMessage(advice, validSaUtr).futureValue
 
       verify(messageConnectorMock, never()).create(any())(any())
-      storageResult shouldBe UserIsNotPaperless
+      storageResult must be(UserIsNotPaperless)
     }
 
     "handle case when taxpayer is not found" in new TestCase {
@@ -65,7 +65,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
       val storageResult = secureMessageService.createMessage(advice, validSaUtr).futureValue
 
       verify(messageConnectorMock, never()).create(any())(any())
-      storageResult shouldBe UnknownTaxId
+      storageResult must be(UnknownTaxId)
     }
 
     "handle case when paperless check fails" in new TestCase {
@@ -75,7 +75,7 @@ class SecureMessageServiceSpec extends UnitSpec with MockitoSugar with ScalaFutu
       val storageResult = secureMessageService.createMessage(advice, validSaUtr).futureValue
 
       verify(messageConnectorMock, never()).create(any())(any())
-      storageResult shouldBe UnexpectedError("Creation of the advice failed. Reason: Could not determine if user with utr is paperless")
+      storageResult must be(UnexpectedError("Creation of the advice failed. Reason: Could not determine if user with utr is paperless"))
     }
   }
 

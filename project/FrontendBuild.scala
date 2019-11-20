@@ -15,24 +15,25 @@ object FrontendBuild extends Build with MicroService {
 }
 
 private object AppDependencies {
+
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
   def apply() = Seq(
     ws,
-    "uk.gov.hmrc"                 %% "bootstrap-play-25"        % "4.9.0",
-    "uk.gov.hmrc"                 %% "govuk-template"           % "5.26.0-play-25",
-    "uk.gov.hmrc"                 %% "domain"                   % "5.1.0",
-    "uk.gov.hmrc"                 %% "play-ui"                  % "7.27.0-play-25",
-    "uk.gov.hmrc"                 %% "play-partials"            % "6.4.0",
-    "net.codingwell"              %% "scala-guice"              % "4.1.1",
-    "org.jsoup"                   %  "jsoup"                    % "1.10.2",
-    "com.github.tomakehurst"      %  "wiremock"                 % "1.58"  % "test,it",
-    "uk.gov.hmrc"                 %% "hmrctest"                 % "3.5.0-play-25" % "test,it",
-    "org.scalatest"               %% "scalatest"                % "3.0.7" % "test,it",
-    "org.pegdown"                 %  "pegdown"                  % "1.6.0" % "test,it",
-    "org.mockito"                 %  "mockito-core"             % "1.9.0" % "test,it",
-    "org.scalatestplus.play"      %% "scalatestplus-play"       % "2.0.1" % "test,it",
-    "com.typesafe.play"           %% "play-test"                % PlayVersion.current % "test,it"
+    "uk.gov.hmrc"            %% "bootstrap-play-26"            % "1.1.0",
+    "uk.gov.hmrc"            %% "govuk-template"               % "5.42.0-play-26",
+    "uk.gov.hmrc"            %% "domain"                       % "5.6.0-play-26",
+    "uk.gov.hmrc"            %% "play-ui"                      % "8.3.0-play-26",
+    "uk.gov.hmrc"            %% "play-partials"                % "6.9.0-play-26",
+    "uk.gov.hmrc"            %% "play-filters"                 % "5.18.0",
+    "com.typesafe.play"      %% "play-json-joda"               % "2.6.13",
+    "org.jsoup"              % "jsoup"                         % "1.12.1",
+    "org.skyscreamer"        % "jsonassert"                    % "1.4.0",
+    "com.github.tomakehurst" % "wiremock-jre8"                 % "2.21.0"               % "test,it",
+    "org.pegdown"            % "pegdown"                       % "1.6.0"                % "test,it",
+    "org.mockito"            % "mockito-all"                   % "1.10.19"              % "test",
+    "org.scalatestplus.play" %% "scalatestplus-play"           % "3.1.0"                % "test,it",
+    "uk.gov.hmrc"            %% "service-integration-test"     % "0.9.0-play-26"        % "test, it"
   )
 }

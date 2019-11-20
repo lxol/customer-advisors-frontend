@@ -24,25 +24,29 @@ import com.github.tomakehurst.wiremock.http.Fault
 import javax.inject.{Inject, Singleton}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatestplus.play.OneServerPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.{PlaySpec}
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.domain.{AdviceAlreadyExists, AdviceStored, UnexpectedError}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
 
 @Singleton
 class TestMessageConnector @Inject()(http: HttpClient,
                                      override val runModeConfiguration: Configuration,
-                                     override val environment: Environment) extends MessageConnector(http, runModeConfiguration, environment) {
+                                     servicesConfig: ServicesConfig,
+                                     override val environment: Environment)
+  extends MessageConnector(http, runModeConfiguration, servicesConfig, environment) {
+
   override lazy val serviceUrl: String = s"http://localhost:58008"
 }
 
-class MessageConnectorSpec extends UnitSpec
-  with OneServerPerSuite
+class MessageConnectorSpec() extends PlaySpec
+  with GuiceOneAppPerSuite
   with ScalaFutures
   with WithWiremock
   with TableDrivenPropertyChecks
@@ -76,16 +80,15 @@ class MessageConnectorSpec extends UnitSpec
         willReturn(aResponse().
           withStatus(Status.CREATED).withBody("""{"id":"12341234"}""")))
 
-      connector.create(secureMessage).futureValue shouldBe AdviceStored("12341234")
+      connector.create(secureMessage).futureValue must be(AdviceStored("12341234"))
     }
 
     "return MessageAlreadyExists failure with true when the message service returns 409 (conflict) while saving" in
       new TestCase {
         stubFor(post(urlEqualTo(expectedPath)).willReturn(aResponse().withStatus(Status.CONFLICT)))
+        connector.create(secureMessage).futureValue must be(AdviceAlreadyExists)
 
-        connector.create(secureMessage).futureValue shouldBe AdviceAlreadyExists
       }
-
     forAll(Table("statusCode", 400, 401, 404, 415, 500)) { statusCode: Int =>
       s"return Failure with reason for status=$statusCode" in new TestCase {
 
@@ -98,9 +101,9 @@ class MessageConnectorSpec extends UnitSpec
         val response = connector.create(secureMessage).futureValue
         response match {
           case UnexpectedError(reason) => {
-            reason.toString should include(expectedPath)
-            reason.toString should include(statusCode.toString)
-            reason.toString should include("'{\"reason\":\"something went wrong\"}'")
+            reason.toString must include(expectedPath)
+            reason.toString must include(statusCode.toString)
+            reason.toString must include("'{\"reason\":\"something went wrong\"}'")
           }
         }
       }
@@ -112,18 +115,16 @@ class MessageConnectorSpec extends UnitSpec
           .withFault(Fault.RANDOM_DATA_THEN_CLOSE)))
 
       val response = connector.create(secureMessage).futureValue
-      response shouldBe UnexpectedError("Remotely closed")
+      response must be(UnexpectedError("Remotely closed"))
     }
   }
 
   trait TestCase {
-
-    val messageServiceBaseUrl = s"http://localhost:$messagePort"
+   // val messageServiceBaseUrl = s"http://localhost:$messagePort"
     val expectedPath = s"/messages"
 
     val secureMessage = SecureMessageCreator.message
-
-    val connector = app.injector.instanceOf(classOf[TestMessageConnector])
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    val connector = app.injector.instanceOf[TestMessageConnector]
   }
-
 }
