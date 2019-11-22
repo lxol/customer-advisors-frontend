@@ -21,8 +21,10 @@ import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
 import play.api.http.Status
 import play.api.i18n.MessagesApi
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -41,6 +43,13 @@ class SecureMessageControllerV2Spec
     with IntegrationPatience
     with WithWiremock
     with MessageStubV2 {
+
+  implicit lazy override val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "Test.microservice.services.message.port" -> "10100",
+      "Test.microservice.services.entity-resolver.port" -> "10100"
+    )
+    .build()
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")

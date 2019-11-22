@@ -24,6 +24,7 @@ trait MicroService {
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
   lazy val externalServices = List(
+    ExternalService("AUTH"),
     ExternalService("USER_DETAILS"),
     ExternalService("PREFERENCES"),
     ExternalService("MESSAGE"),

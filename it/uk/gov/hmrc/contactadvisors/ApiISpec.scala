@@ -34,12 +34,7 @@ class ApiISpec extends PlaySpec
   with Eventually with ServiceSpec {
 
   override val applicationMode = Mode.Test
-  def externalServices: Seq[String] = CustomerAdvisorsIntegrationServer.allExternalServices
-
-  override  val additionalConfig: Map[String, Any] = Map(
-    "Dev.microservice.services.customer-advisors-frontend.port" -> port,
-    "ws.timeout.idle" -> "600000"
-  )
+  def externalServices: Seq[String] = Seq.empty
 
   protected def startTimeout = 240.seconds
 
@@ -114,23 +109,4 @@ class ApiISpec extends PlaySpec
       }
     }
   }
-}
-
-object CustomerAdvisorsIntegrationServer {
-  val UserDetails = "user-details"
-  val Preferences = "preferences"
-  val EntityResolver = "entity-resolver"
-  val HmrcDeskPro = "hmrc-deskpro"
-  val SA = "sa"
-  val Datastream = "datastream"
-  val Message = "message"
-  val allExternalServices = Seq(
-    UserDetails,
-    Preferences,
-    EntityResolver,
-    SA,
-    Datastream,
-    Message
-  )
-  var serverControlledByItSuite = false
 }
