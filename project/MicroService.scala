@@ -3,7 +3,7 @@ import sbt.Tests.{Group, SubProcess}
 import sbt._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import play.routes.compiler.InjectedRoutesGenerator
-import uk.gov.hmrc.SbtArtifactory
+import uk.gov.hmrc.ServiceManagerPlugin.Keys.itDependenciesList
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning
 
@@ -22,6 +22,17 @@ trait MicroService {
   lazy val appDependencies : Seq[ModuleID] = ???
   lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala)
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
+
+  lazy val externalServices = List(
+    ExternalService("USER_DETAILS"),
+    ExternalService("PREFERENCES"),
+    ExternalService("MESSAGE"),
+    ExternalService("ENTITY_RESOLVER"),
+    ExternalService("HMRCDESKPRO"),
+    ExternalService("SA"),
+    ExternalService("DATASTREAM", enableTestOnlyEndpoints = true)
+  )
+
 
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
@@ -49,6 +60,8 @@ trait MicroService {
     )
     .configs(IntegrationTest)
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
+    .settings(ServiceManagerPlugin.serviceManagerSettings)
+    .settings(itDependenciesList := externalServices)
     .settings(
       Keys.fork in IntegrationTest := false,
       unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in IntegrationTest)(base => Seq(base / "it")),

@@ -21,6 +21,7 @@ import org.jsoup.Jsoup
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatestplus.play.PlaySpec
+import play.api.Mode
 import play.api.http.Status._
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,7 +33,8 @@ class ApiISpec extends PlaySpec
   with BeforeAndAfterAll
   with Eventually with ServiceSpec {
 
-  val externalServices = CustomerAdvisorsIntegrationServer.allExternalServices
+  override val applicationMode = Mode.Test
+  def externalServices: Seq[String] = CustomerAdvisorsIntegrationServer.allExternalServices
 
   override  val additionalConfig: Map[String, Any] = Map(
     "Dev.microservice.services.customer-advisors-frontend.port" -> port,
@@ -131,5 +133,4 @@ object CustomerAdvisorsIntegrationServer {
     Message
   )
   var serverControlledByItSuite = false
-
 }
