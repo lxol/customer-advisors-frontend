@@ -23,23 +23,20 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
 class EntityResolverConnector @Inject()(http: HttpClient,
-                                        override val runModeConfiguration: Configuration,
-                                        val environment: Environment) extends Status with ServicesConfig {
+                                        runModeConfiguration: Configuration,
+                                        servicesConfig: ServicesConfig,
+                                        environment: Environment) extends Status {
 
-  lazy val serviceUrl: String = baseUrl("entity-resolver")
-
-  override protected def mode = environment.mode
+  lazy val serviceUrl: String = servicesConfig.baseUrl("entity-resolver")
 
   def validPaperlessUserWith(utr: SaUtr)(implicit hc: HeaderCarrier): Future[Option[PaperlessPreference]] = {
-
     implicit val preferenceFormats = PaperlessPreference.formats
 
     def unexpectedFailure(msg: String) = Future.failed(

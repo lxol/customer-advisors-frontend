@@ -20,9 +20,11 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.{Eventually, IntegrationPatience, ScalaFutures}
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
-import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.MessagesApi
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
@@ -32,11 +34,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 
-class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with IntegrationPatience with Eventually {
+class CustomerAdviceAuditSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with IntegrationPatience with Eventually {
 
   "SecureMessageController" should {
 
@@ -51,10 +52,10 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxSucceeded"
-      event.detail.get("messageId").get shouldBe "1234"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Stored"
+      event.auditSource must be("customer-advisors-frontend")
+      event.auditType must be("TxSucceeded")
+      event.detail.get("messageId").get must be("1234")
+      event.tags.get(EventKeys.TransactionName).get must be("Message Stored")
     }
 
     "audit the duplicate message event" in new TestCase {
@@ -68,10 +69,10 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Duplicate Message Found"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+      event.auditSource must be("customer-advisors-frontend")
+      event.auditType must be("TxFailed")
+      event.detail.get("reason").get must be("Duplicate Message Found")
+      event.tags.get(EventKeys.TransactionName).get must be("Message Not Stored")
     }
 
     "audit the unknown tax id event" in new TestCase {
@@ -85,10 +86,10 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Unknown Tax Id"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+      event.auditSource must be("customer-advisors-frontend")
+      event.auditType must be("TxFailed")
+      event.detail.get("reason").get must be("Unknown Tax Id")
+      event.tags.get(EventKeys.TransactionName).get must be("Message Not Stored")
     }
 
     "audit the user not paperless event" in new TestCase {
@@ -102,10 +103,10 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "User is not paperless"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+      event.auditSource must be("customer-advisors-frontend")
+      event.auditType must be("TxFailed")
+      event.detail.get("reason").get must be("User is not paperless")
+      event.tags.get(EventKeys.TransactionName).get must be("Message Not Stored")
     }
 
     "audit the unexpected error event" in new TestCase {
@@ -119,40 +120,44 @@ class CustomerAdviceAuditSpec extends UnitSpec with ScalaFutures with OneAppPerS
       }
 
       val event = dataEventCaptor.getValue
-      event.auditSource shouldBe "customer-advisors-frontend"
-      event.auditType shouldBe "TxFailed"
-      event.detail.get("reason").get shouldBe "Unexpected Error: this is the reason"
-      event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Stored"
+      event.auditSource must be("customer-advisors-frontend")
+      event.auditType must be("TxFailed")
+      event.detail.get("reason").get must be("Unexpected Error: this is the reason")
+      event.tags.get(EventKeys.TransactionName).get must be("Message Not Stored")
     }
   }
-}
 
-trait TestCase extends MockitoSugar {
 
-  val secureMessageServiceMock = mock[SecureMessageService]
-  val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
+  trait TestCase extends MockitoSugar {
 
-  val env = Environment.simple()
-  val configuration = Configuration.reference ++ Configuration.from(Map(
-    "Test.google-analytics.token" -> "token",
-    "Test.google-analytics.host" -> "host"))
+    val secureMessageServiceMock = mock[SecureMessageService]
+    val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
 
-  val auditConnectorMock = mock[AuditConnector]
-  val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
-  val appConfig = new FrontendAppConfig(configuration, env)
+    val env = Environment.simple()
+    val configuration = Configuration.reference ++ Configuration.from(Map(
+      "Test.google-analytics.token" -> "token",
+      "Test.google-analytics.host" -> "host"))
 
-  val messageApi = new DefaultMessagesApi(env, configuration, new DefaultLangs(configuration))
-  val controller = new SecureMessageController(customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
-    val secureMessageService: SecureMessageService = secureMessageServiceMock
+    val auditConnectorMock = mock[AuditConnector]
+    val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
+    val appConfig = app.injector.instanceOf[FrontendAppConfig]
 
-    def auditSource: String = "customer-advisors-frontend"
+    val controllerComponents = app.injector.instanceOf[MessagesControllerComponents]
+
+    val messageApi = app.injector.instanceOf[MessagesApi]
+
+    val controller = new SecureMessageController(controllerComponents, customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
+      val secureMessageService: SecureMessageService = secureMessageServiceMock
+
+      def auditSource: String = "customer-advisors-frontend"
+    }
+    val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
+    implicit val hc = HeaderCarrier
+    when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
+
+    val request = FakeRequest("POST", "/inbox/123456789").withFormUrlEncodedBody(
+      "subject" -> "New message subject",
+      "message" -> "New message body"
+    )
   }
-  val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
-  implicit val hc = HeaderCarrier
-  when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
-
-  val request = FakeRequest("POST", "/inbox/123456789").withFormUrlEncodedBody(
-    "subject" -> "New message subject",
-    "message" -> "New message body"
-  )
 }

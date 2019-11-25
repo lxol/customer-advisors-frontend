@@ -21,30 +21,39 @@ import java.util.UUID
 import org.jsoup.Jsoup
 import org.scalatest.Inside
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatestplus.play.OneServerPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.PlaySpec
+import play.api.Application
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.mvc.Result
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub}
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class SecureMessageControllerSpec
-  extends UnitSpec
-    with OneServerPerSuite
+  extends PlaySpec
+    with GuiceOneAppPerSuite
     with ScalaFutures
     with IntegrationPatience
     with WithWiremock
     with EntityResolverStub
     with MessageStub {
+
+  implicit lazy override val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "Test.microservice.services.message.port" -> "10100",
+          "Test.microservice.services.entity-resolver.port" -> "10100"
+    )
+    .build()
 
   val getRequest = FakeRequest("GET", "/")
   val postRequest = FakeRequest("POST", "/")
@@ -54,30 +63,34 @@ class SecureMessageControllerSpec
   val subject = "This is a response to your HMRC request"
   val adviceBody = "<p>This is the content of the secure message</p>"
 
-  val controller = new SecureMessageController(app.injector.instanceOf(classOf[CustomerAdviceAudit]), app.injector.instanceOf(classOf[SecureMessageService]), app.injector.instanceOf(classOf[MessagesApi]))(app.injector.instanceOf(classOf[FrontendAppConfig])) {
+  val controller = new SecureMessageController(
+    app.injector.instanceOf[MessagesControllerComponents],
+    app.injector.instanceOf[CustomerAdviceAudit],
+    app.injector.instanceOf[SecureMessageService],
+    app.injector.instanceOf[MessagesApi])(app.injector.instanceOf[FrontendAppConfig]) {
     def auditSource: String = "customer-advisors-frontend"
   }
   "GET /inbox/:utr" should {
     "return 200" in {
       val result = controller.inbox(customer_utr)(getRequest)
-      status(result) shouldBe Status.OK
+      status(result) must be(Status.OK)
     }
 
     "return HTML" in {
       val result = controller.inbox(customer_utr)(getRequest)
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
     }
 
     "show main banner" in {
       val result = controller.inbox(customer_utr)(getRequest)
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
     }
 
     "have the expected elements on the form" in {
       val result = controller.inbox(customer_utr)(getRequest)
-      status(result) shouldBe 200
+      status(result) must be(200)
 
       val document = Jsoup.parse(contentAsString(result))
       val form = document.select("form#form-submit-customer-advice").get(0)
@@ -87,21 +100,21 @@ class SecureMessageControllerSpec
       withClue("advice subject field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
-            element.attr("type") shouldBe "hidden"
-            element.`val`() shouldBe "Response to your enquiry from HMRC customer services"
+            element.tagName() must be("input")
+            element.attr("type") must be("hidden")
+            element.`val`() must be("Response to your enquiry from HMRC customer services")
         }
       }
 
       val adviceMessage = formElements.find(_.id() == "message")
       withClue("advice message field") {
-        adviceMessage.map(_.tagName()) shouldBe Some("textarea")
+        adviceMessage.map(_.tagName()) must be(Some("textarea"))
       }
 
       val submitAdvice = formElements.find(_.id() == "submit-advice")
       withClue("submit advice button") {
-        submitAdvice.map(_.tagName()) shouldBe Some("button")
-        submitAdvice.map(_.text()) shouldBe Some("Send")
+        submitAdvice.map(_.tagName()) must be(Some("button"))
+        submitAdvice.map(_.text()) must be(Some("Send"))
       }
 
     }
@@ -110,24 +123,24 @@ class SecureMessageControllerSpec
   "GET /customer-advisors-frontend/inbox" should {
     "return 200" in {
       val result = controller.inboxV2()(getRequest)
-      status(result) shouldBe Status.OK
+      status(result) must be(Status.OK)
     }
 
     "return HTML" in {
       val result = controller.inboxV2()(getRequest)
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
     }
 
     "show main banner" in {
       val result = controller.inboxV2()(getRequest)
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
     }
 
     "have the expected elements on the form" in {
       val result = controller.inboxV2()(getRequest)
-      status(result) shouldBe 200
+      status(result) must be(200)
 
       val document = Jsoup.parse(contentAsString(result))
       val form = document.select("form#form-submit-customer-advice").get(0)
@@ -137,19 +150,19 @@ class SecureMessageControllerSpec
       withClue("advice subject field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
       val adviceMessage = formElements.find(_.id() == "content")
       withClue("advice message field") {
-        adviceMessage.map(_.tagName()) shouldBe Some("textarea")
+        adviceMessage.map(_.tagName()) must be(Some("textarea"))
       }
 
       val submitAdvice = formElements.find(_.id() == "submit-advice")
       withClue("submit advice button") {
-        submitAdvice.map(_.tagName()) shouldBe Some("button")
-        submitAdvice.map(_.text()) shouldBe Some("Send")
+        submitAdvice.map(_.tagName()) must be(Some("button"))
+        submitAdvice.map(_.text()) must be(Some("Send"))
       }
 
 
@@ -157,7 +170,7 @@ class SecureMessageControllerSpec
       withClue("advice recipient taxidentifier name field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -165,7 +178,7 @@ class SecureMessageControllerSpec
       withClue("advice recipient taxidentifier value field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -173,7 +186,7 @@ class SecureMessageControllerSpec
       withClue("advice recipient email field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -181,7 +194,7 @@ class SecureMessageControllerSpec
       withClue("advice recipient name line1 field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
 
@@ -189,7 +202,7 @@ class SecureMessageControllerSpec
       withClue("advice messageType field") {
         Inside.inside(adviceSubject) {
           case Some(element) =>
-            element.tagName() shouldBe "input"
+            element.tagName() must be("input")
         }
       }
     }
@@ -202,20 +215,20 @@ class SecureMessageControllerSpec
           "message" -> "A message success to the customer. lkasdfjas;ldfjk"
         )
       )
-      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptySubject) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala must have size 1
+      status(emptySubject) must be(BAD_REQUEST)
 
       val emptyMessage = controller.submit(customer_utr)(
         FakeRequest().withFormUrlEncodedBody(
           "subject" -> "subject"
         )
       )
-      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala should have size 1
-      status(emptyMessage) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala must have size 1
+      status(emptyMessage) must be(BAD_REQUEST)
 
       val emptyFormFields = controller.submit(customer_utr)(FakeRequest())
-      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala should have size 2
-      status(emptyFormFields) shouldBe BAD_REQUEST
+      Jsoup.parse(contentAsString(emptyFormFields)).getElementsByClass("error-notification").asScala must have size 2
+      status(emptyFormFields) must be(BAD_REQUEST)
     }
 
     "Leave script tags in the message and subject" in {
@@ -309,40 +322,39 @@ class SecureMessageControllerSpec
 
   implicit class ShouldContainPageWithMessage(result: Future[Result]) {
     def shouldContainPageWithTitleAndMessage(title: String, utr: String, message: String) = {
-      status(result) shouldBe 200
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+      status(result) must be(200)
+      contentType(result) must be(Some("text/html"))
+      charset(result) must be(Some("utf-8"))
 
       val document = Jsoup.parse(contentAsString(result))
-      document.getElementsByTag("header").attr("id") shouldBe "global-header"
+      document.getElementsByTag("header").attr("id") must be("global-header")
 
       withClue("result page title") {
-        document.title() shouldBe title
+        document.title() must be(title)
       }
 
       withClue("result page header") {
-        document.select("h2").text().trim shouldBe s"Reply to customer with SA-UTR $utr"
+        document.select("h2").text().trim must include(s"Reply to customer with SA-UTR $utr")
       }
 
       withClue("result message") {
         val creationResult = document.select("p.alert__message")
-        creationResult should have size 1
-        creationResult.get(0).text() shouldBe message
+        creationResult must have size 1
+        creationResult.get(0).text() must be(message)
       }
     }
   }
 
   implicit class ReturnsRedirectTo(result: Future[Result]) {
     def returnsRedirectTo(url: String) = {
-      status(result) shouldBe 303
+      status(result) must be(303)
 
       redirectLocation(result) match {
-        case Some(redirect) => redirect should startWith(s"/secure-message$url")
+        case Some(redirect) => redirect must startWith(s"/secure-message$url")
         case _ => fail("redirect location should always be present")
       }
 
     }
   }
-
   override val dependenciesPort: Int = 10100
 }

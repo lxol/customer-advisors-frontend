@@ -17,11 +17,11 @@
 package uk.gov.hmrc.contactadvisors.connectors.models
 
 import org.joda.time.DateTime
+import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.play.test.UnitSpec
 
-class SecureMessageSpec extends UnitSpec {
+class SecureMessageSpec extends PlaySpec {
 
   "SecureMessage.format" should {
 
@@ -60,7 +60,7 @@ class SecureMessageSpec extends UnitSpec {
            |}
          """.stripMargin
 
-      Json.toJson(message) shouldBe Json.parse(expectedJson)
+      Json.toJson(message) must be(Json.parse(expectedJson))
     }
   }
 

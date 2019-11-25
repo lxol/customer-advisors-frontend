@@ -32,13 +32,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.{FrontendController}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Future}
 
 @Singleton
-class SecureMessageController @Inject()(customerAdviceAudit: CustomerAdviceAudit, secureMessageService: SecureMessageService, val messagesApi: MessagesApi)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig) extends FrontendController with I18nSupport {
+class SecureMessageController @Inject()(controllerComponents: MessagesControllerComponents,
+                                        customerAdviceAudit: CustomerAdviceAudit,
+                                        secureMessageService: SecureMessageService,
+                                        messagesApi: MessagesApi)
+                                       (implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig)
+  extends FrontendController(controllerComponents) with I18nSupport {
+
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
       Ok(

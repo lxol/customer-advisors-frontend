@@ -17,31 +17,33 @@
 package uk.gov.hmrc.contactadvisors.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import javax.inject.{ Inject, Singleton }
+import javax.inject.{Inject, Singleton}
 import org.scalatest.Inside._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.mock.MockitoSugar._
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatestplus.play.OneServerPerSuite
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.libs.json.{JsObject, Json}
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.utils.WithWiremock
 
 @Singleton
 class TestEntityResolverConnector @Inject()(http: HttpClient,
-  override val runModeConfiguration: Configuration,
-  override val environment: Environment) extends EntityResolverConnector(http, runModeConfiguration, environment)  {
+                                            val runModeConfiguration: Configuration,
+                                            servicesConfig: ServicesConfig,
+                                            val environment: Environment)
+  extends EntityResolverConnector(http, runModeConfiguration, servicesConfig, environment) {
   override lazy val serviceUrl: String = s"http://localhost:8015"
 }
 
-class EntityResolverConnectorSpec extends UnitSpec
-  with OneServerPerSuite
+class EntityResolverConnectorSpec extends PlaySpec
+  with GuiceOneAppPerSuite
   with ScalaFutures
   with WithWiremock
   with TableDrivenPropertyChecks
@@ -62,19 +64,19 @@ class EntityResolverConnectorSpec extends UnitSpec
           "status" -> "verified"
         )
       )))
-      connector.validPaperlessUserWith(utr).futureValue shouldBe Some(PaperlessPreference(true))
+      connector.validPaperlessUserWith(utr).futureValue must be(Some(PaperlessPreference(true)))
     }
 
     "return CustomerCannotReceiveAlerts when provided a tax identifier for a user that has opted out of paperless" in new TestCase {
       entityResolverReturns(Status.OK, Some(Json.obj("digital" -> false)))
 
-      connector.validPaperlessUserWith(utr).futureValue shouldBe Some(PaperlessPreference(false))
+      connector.validPaperlessUserWith(utr).futureValue must be(Some(PaperlessPreference(false)))
     }
 
     "return UnknownTaxId when provided a tax identifier that cannot be resolved" in new TestCase {
       entityResolverReturns(Status.NOT_FOUND)
 
-      connector.validPaperlessUserWith(utr).futureValue shouldBe None
+      connector.validPaperlessUserWith(utr).futureValue must be(None)
     }
 
     forAll(Table("statusCode", 400, 401, 403, 415, 500)) { statusCode: Int =>
@@ -83,7 +85,7 @@ class EntityResolverConnectorSpec extends UnitSpec
 
         inside(connector.validPaperlessUserWith(utr).failed.futureValue) {
           case UnexpectedFailure(msg) =>
-            msg should include(statusCode.toString)
+            msg must include(statusCode.toString)
         }
       }
     }

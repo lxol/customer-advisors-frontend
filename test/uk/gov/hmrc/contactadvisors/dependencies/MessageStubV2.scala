@@ -71,7 +71,7 @@ trait MessageStubV2 {
                  |}
          """.stripMargin
             },
-            JSONCompareMode.LENIENT
+            false, true
           )
         )
         .withRequestBody(matchingJsonPath("$.externalRef.id"))

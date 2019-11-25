@@ -23,22 +23,19 @@ import play.mvc.Http.Status
 import uk.gov.hmrc.contactadvisors.connectors.models.{SecureMessage, SecureMessageV2}
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.config.ServicesConfig
-
 import scala.concurrent.Future
-
 
 @Singleton
 class MessageConnector @Inject()(http: HttpClient,
-                                 override val runModeConfiguration: Configuration,
-                                 val environment: Environment) extends Status with ServicesConfig {
+                                 val runModeConfiguration: Configuration,
+                                 servicesConfig: ServicesConfig,
+                                 val environment: Environment) extends Status {
 
-  lazy val serviceUrl: String = baseUrl("message")
+  lazy val serviceUrl: String = servicesConfig.baseUrl("message")
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  override protected def mode = environment.mode
 
   def create(secureMessage: SecureMessage)
             (implicit hc: HeaderCarrier): Future[StorageResult] = {

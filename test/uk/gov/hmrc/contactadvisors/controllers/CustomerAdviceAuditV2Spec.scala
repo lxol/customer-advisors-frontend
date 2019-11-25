@@ -20,9 +20,11 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.{Eventually, IntegrationPatience, ScalaFutures}
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
-import play.api.i18n.{DefaultLangs, DefaultMessagesApi}
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.i18n.MessagesApi
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
@@ -32,11 +34,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.test.UnitSpec
-
 import scala.concurrent.Future
 
-class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPerSuite with IntegrationPatience with Eventually {
+class CustomerAdviceAuditV2Spec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with IntegrationPatience with Eventually {
 
   "SecureMessageController" should {
 
@@ -53,37 +53,47 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       val event = dataEventCaptor.getValue
 
       withClue("event auditSource") {
-        event.auditSource shouldBe "customer-advisors-frontend"
+        event.auditSource must be("customer-advisors-frontend")
       }
       withClue("event auditType") {
-        event.auditType shouldBe "TxSucceeded"
+        event.auditType must be("TxSucceeded")
       }
       withClue("event eventId") {
-        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+        event.eventId must include regex ("^[0-9a-fA-F-]+$")
       }
       withClue("event tags.transactionName") {
-        event.tags.get(EventKeys.TransactionName) should not {be (None)}
-        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Created"
+        event.tags.get(EventKeys.TransactionName) must not {
+          be(None)
+        }
+        event.tags.get(EventKeys.TransactionName).get must be("Message Created")
       }
 
       withClue("event detail.messageId") {
-        event.detail.get("messageId") should not {be (None)}
-        event.detail.get("messageId").get shouldBe "1234"
+        event.detail.get("messageId") must not {
+          be(None)
+        }
+        event.detail.get("messageId").get must be("1234")
       }
 
       withClue("event details.externalRef") {
-        event.detail.get("externalRef") should not {be (None)}
-        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+        event.detail.get("externalRef") must not {
+          be(None)
+        }
+        event.detail.get("externalRef").get must include regex ("^[0-9a-fA-F-]+$")
       }
 
       withClue("event detail.fhddsRef") {
-        event.detail.get("fhddsRef") should not {be (None)}
-        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
+        event.detail.get("fhddsRef") must not {
+          be(None)
+        }
+        event.detail.get("fhddsRef").get must include regex ("XZFH00000100024")
       }
 
       withClue("event detail.messageType") {
-        event.detail.get("messageType") should not {be (None)}
-        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
+        event.detail.get("messageType") must not {
+          be(None)
+        }
+        event.detail.get("messageType").get must be("fhddsAlertMessage")
       }
     }
 
@@ -100,37 +110,47 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       val event = dataEventCaptor.getValue
 
       withClue("event auditSource") {
-        event.auditSource shouldBe "customer-advisors-frontend"
+        event.auditSource must be("customer-advisors-frontend")
       }
       withClue("event auditType") {
-        event.auditType shouldBe "TxSucceeded"
+        event.auditType must be("TxSucceeded")
       }
       withClue("event eventId") {
-        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+        event.eventId must include regex ("^[0-9a-fA-F-]+$")
       }
       withClue("event tags.transactionName") {
-        event.tags.get(EventKeys.TransactionName) should not {be (None)}
-        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Duplicate Request"
+        event.tags.get(EventKeys.TransactionName) must not {
+          be(None)
+        }
+        event.tags.get(EventKeys.TransactionName).get must be("Message Duplicate Request")
       }
 
       withClue("event detail.messageId") {
-        event.detail.get("messageId") should not {be (None)}
-        event.detail.get("messageId").get shouldBe ""
+        event.detail.get("messageId") must not {
+          be(None)
+        }
+        event.detail.get("messageId").get must be("")
       }
 
       withClue("event detal.fhddsRef") {
-        event.detail.get("fhddsRef") should not {be (None)}
-        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
+        event.detail.get("fhddsRef") must not {
+          be(None)
+        }
+        event.detail.get("fhddsRef").get must include regex ("XZFH00000100024")
       }
 
       withClue("event details.externalRef") {
-        event.detail.get("externalRef") should not {be (None)}
-        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+        event.detail.get("externalRef") must not {
+          be(None)
+        }
+        event.detail.get("externalRef").get must include regex ("^[0-9a-fA-F-]+$")
       }
 
       withClue("event detail.messageType") {
-        event.detail.get("messageType") should not {be (None)}
-        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
+        event.detail.get("messageType") must not {
+          be(None)
+        }
+        event.detail.get("messageType").get must be("fhddsAlertMessage")
       }
 
     }
@@ -149,72 +169,84 @@ class CustomerAdviceAuditV2Spec extends UnitSpec with ScalaFutures with OneAppPe
       val event = dataEventCaptor.getValue
 
       withClue("event auditSource") {
-        event.auditSource shouldBe "customer-advisors-frontend"
+        event.auditSource must be("customer-advisors-frontend")
       }
       withClue("event auditType") {
-        event.auditType shouldBe "TxFailed"
+        event.auditType must be("TxFailed")
       }
       withClue("event eventId") {
-        event.eventId should include regex ("^[0-9a-fA-F-]+$")
+        event.eventId must include regex ("^[0-9a-fA-F-]+$")
       }
       withClue("event tags.transactionName") {
-        event.tags.get(EventKeys.TransactionName) should not {be (None)}
-        event.tags.get(EventKeys.TransactionName).get shouldBe "Message Not Created"
+        event.tags.get(EventKeys.TransactionName) must not {
+          be(None)
+        }
+        event.tags.get(EventKeys.TransactionName).get must be("Message Not Created")
       }
 
       withClue("event detail.messageId") {
-        event.detail.get("messageId") should not {be (None)}
-        event.detail.get("messageId").get shouldBe ""
+        event.detail.get("messageId") must not {
+          be(None)
+        }
+        event.detail.get("messageId").get must be("")
       }
 
       withClue("event detal.fhddsRef") {
-        event.detail.get("fhddsRef") should not {be (None)}
-        event.detail.get("fhddsRef").get should include regex ("XZFH00000100024")
+        event.detail.get("fhddsRef") must not {
+          be(None)
+        }
+        event.detail.get("fhddsRef").get must include regex ("XZFH00000100024")
       }
 
       withClue("event details.externalRef") {
-        event.detail.get("externalRef") should not {be (None)}
-        event.detail.get("externalRef").get should include regex ("^[0-9a-fA-F-]+$")
+        event.detail.get("externalRef") must not {
+          be(None)
+        }
+        event.detail.get("externalRef").get must include regex ("^[0-9a-fA-F-]+$")
       }
 
       withClue("event detail.messageType") {
-        event.detail.get("messageType") should not {be (None)}
-        event.detail.get("messageType").get shouldBe "fhddsAlertMessage"
+        event.detail.get("messageType") must not {
+          be(None)
+        }
+        event.detail.get("messageType").get must be("fhddsAlertMessage")
       }
 
       withClue("event detail.reason") {
-        event.detail.get("reason") should not {be (None)}
-        event.detail.get("reason").get shouldBe "this is the reason"
+        event.detail.get("reason") must not {
+          be(None)
+        }
+        event.detail.get("reason").get must be("this is the reason")
       }
     }
   }
-}
 
-trait TestCaseV2 extends MockitoSugar {
+  trait TestCaseV2 extends MockitoSugar {
+    val secureMessageServiceMock = mock[SecureMessageService]
+    val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
 
-  val secureMessageServiceMock = mock[SecureMessageService]
-  val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
+    val env = Environment.simple()
+    val configuration = Configuration.reference ++ Configuration.from(Map(
+      "Test.google-analytics.token" -> "token",
+      "Test.google-analytics.host" -> "host"))
 
-  val env = Environment.simple()
-  val configuration = Configuration.reference ++ Configuration.from(Map(
-    "Test.google-analytics.token" -> "token",
-    "Test.google-analytics.host" -> "host"))
+    val auditConnectorMock = mock[AuditConnector]
+    val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
+    val appConfig = app.injector.instanceOf[FrontendAppConfig]
+    val controllerComponents = app.injector.instanceOf[MessagesControllerComponents]
+    val messageApi = app.injector.instanceOf[MessagesApi]
 
-  val auditConnectorMock = mock[AuditConnector]
-  val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)
-  val appConfig = new FrontendAppConfig(configuration, env)
+    val controller = new SecureMessageController(controllerComponents, customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
+      val secureMessageService: SecureMessageService = secureMessageServiceMock
 
-  val messageApi = new DefaultMessagesApi(env, configuration, new DefaultLangs(configuration))
-  val controller = new SecureMessageController(customerAdviceAudit, secureMessageServiceMock, messageApi)(appConfig) {
-    val secureMessageService: SecureMessageService = secureMessageServiceMock
+      def auditSource: String = "customer-advisors-frontend"
+    }
 
-    def auditSource: String = "customer-advisors-frontend"
-  }
-  val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
-  implicit val hc = HeaderCarrier
-  when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
+    val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
+    implicit val hc = HeaderCarrier
+    when(auditConnectorMock.sendEvent(any())(any(), any())).thenReturn(Future.successful(AuditResult.Success))
 
-  val request = FakeRequest("POST", "/customer-advisors-frontend/submit").withFormUrlEncodedBody(
+    val request = FakeRequest("POST", "/customer-advisors-frontend/submit").withFormUrlEncodedBody(
       "content" -> "content",
       "subject" -> "subject",
       "recipientTaxidentifierName" -> "HMRC-OBTDS-ORG",
@@ -223,5 +255,6 @@ trait TestCaseV2 extends MockitoSugar {
       "recipientNameLine1" -> "Mr. John Smith",
       "messageType" -> "fhddsAlertMessage",
       "alertQueue" -> "PRIORITY"
-  )
+    )
+  }
 }

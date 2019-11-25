@@ -74,8 +74,7 @@ trait MessageStub {
                |    "paperSent": ${request.details.paperSent}
                |  }
                |}
-         """.stripMargin,
-            JSONCompareMode.LENIENT
+         """.stripMargin,false, true
           )
         )
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
