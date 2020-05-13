@@ -27,7 +27,8 @@ trait MessageStubV2 {
   val messageEndpoint = "/messages"
 
   val duplicatedMessage =
-    (Status.CONFLICT,
+    (
+      Status.CONFLICT,
       s"""
          |{
          |  "reason": "Duplicated message content or external reference ID"
@@ -35,17 +36,17 @@ trait MessageStubV2 {
      """.stripMargin)
 
   val successfulResponse: (Int, String) =
-    (Status.CREATED,
+    (
+      Status.CREATED,
       s"""
          |{
          |  "id" : "507f1f77bcf86cd799439011"
          |}
      """.stripMargin)
 
-  def givenMessageRespondsWith(advice: AdviceV2, response: (Int, String)): Unit = {
+  def givenMessageRespondsWith(advice: AdviceV2, response: (Int, String)): Unit =
     givenThat(
       post(urlEqualTo(messageEndpoint))
-
         .withRequestBody(
           equalToJson(
             {
@@ -71,10 +72,10 @@ trait MessageStubV2 {
                  |}
          """.stripMargin
             },
-            false, true
+            false,
+            true
           )
         )
         .withRequestBody(matchingJsonPath("$.externalRef.id"))
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
-  }
 }

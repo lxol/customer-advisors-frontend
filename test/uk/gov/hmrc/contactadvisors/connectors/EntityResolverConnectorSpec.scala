@@ -17,15 +17,15 @@
 package uk.gov.hmrc.contactadvisors.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import org.scalatest.Inside._
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.libs.json.{JsObject, Json}
-import play.api.{Configuration, Environment}
+import play.api.libs.json.{ JsObject, Json }
+import play.api.{ Configuration, Environment }
 import uk.gov.hmrc.contactadvisors.domain.UnexpectedFailure
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,20 +34,17 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.utils.WithWiremock
 
 @Singleton
-class TestEntityResolverConnector @Inject()(http: HttpClient,
-                                            val runModeConfiguration: Configuration,
-                                            servicesConfig: ServicesConfig,
-                                            val environment: Environment)
-  extends EntityResolverConnector(http, runModeConfiguration, servicesConfig, environment) {
+class TestEntityResolverConnector @Inject()(
+  http: HttpClient,
+  val runModeConfiguration: Configuration,
+  servicesConfig: ServicesConfig,
+  val environment: Environment)
+    extends EntityResolverConnector(http, runModeConfiguration, servicesConfig, environment) {
   override lazy val serviceUrl: String = s"http://localhost:8015"
 }
 
-class EntityResolverConnectorSpec extends PlaySpec
-  with GuiceOneAppPerSuite
-  with ScalaFutures
-  with WithWiremock
-  with TableDrivenPropertyChecks
-  with IntegrationPatience {
+class EntityResolverConnectorSpec
+    extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures with WithWiremock with TableDrivenPropertyChecks with IntegrationPatience {
 
   implicit val hc = HeaderCarrier()
 
@@ -56,14 +53,18 @@ class EntityResolverConnectorSpec extends PlaySpec
   "The Entity Resolver connector" should {
 
     "return true when provided a tax identifier for a valid user, opted-in for paperless" in new TestCase {
-      entityResolverReturns(Status.OK, Some(Json.obj(
-        "digital" -> true,
-        "email" -> Json.obj(
-          "email" -> "bbc14eef-97d3-435e-975a-f2ab069af000@TEST.com",
-          "mailboxFull" -> false,
-          "status" -> "verified"
-        )
-      )))
+      entityResolverReturns(
+        Status.OK,
+        Some(
+          Json.obj(
+            "digital" -> true,
+            "email" -> Json.obj(
+              "email"       -> "bbc14eef-97d3-435e-975a-f2ab069af000@TEST.com",
+              "mailboxFull" -> false,
+              "status"      -> "verified"
+            )
+          ))
+      )
       connector.validPaperlessUserWith(utr).futureValue must be(Some(PaperlessPreference(true)))
     }
 
@@ -100,13 +101,11 @@ class EntityResolverConnectorSpec extends PlaySpec
 
     def entityResolverReturns(status: Int, responseBody: Option[JsObject] = None) =
       givenThat(
-        get(urlEqualTo(pathToPreferences)).
-          willReturn(
-
-            responseBody.fold(aResponse().withStatus(status).withBody("")) { json =>
-              aResponse().withStatus(status).withBody(Json.stringify(json))
-            }
-          )
+        get(urlEqualTo(pathToPreferences)).willReturn(
+          responseBody.fold(aResponse().withStatus(status).withBody("")) { json =>
+            aResponse().withStatus(status).withBody(Json.stringify(json))
+          }
+        )
       )
   }
 

@@ -25,30 +25,33 @@ trait MessageStub {
   val messageEndpoint = "/messages"
 
   val duplicatedMessage =
-    (Status.CONFLICT,
-    s"""
-       |{
-       |  "reason": "Duplicated message content or external reference ID"
-       |}
+    (
+      Status.CONFLICT,
+      s"""
+         |{
+         |  "reason": "Duplicated message content or external reference ID"
+         |}
      """.stripMargin)
 
   val unknownTaxId =
-    (Status.BAD_REQUEST,
-    s"""
-       |{
-       |  "reason": "Unknown tax identifier name XYZ"
-       |}
+    (
+      Status.BAD_REQUEST,
+      s"""
+         |{
+         |  "reason": "Unknown tax identifier name XYZ"
+         |}
      """.stripMargin)
 
   val successfulResponse: (Int, String) =
-    (Status.CREATED,
+    (
+      Status.CREATED,
       s"""
          |{
          |  "id" : "507f1f77bcf86cd799439011"
          |}
      """.stripMargin)
 
-  def givenMessageRespondsWith(request: SecureMessage, response: (Int, String)): Unit = {
+  def givenMessageRespondsWith(request: SecureMessage, response: (Int, String)): Unit =
     givenThat(
       post(urlEqualTo(messageEndpoint))
         .withRequestBody(
@@ -74,9 +77,10 @@ trait MessageStub {
                |    "paperSent": ${request.details.paperSent}
                |  }
                |}
-         """.stripMargin,false, true
+         """.stripMargin,
+            false,
+            true
           )
         )
         .willReturn(aResponse().withStatus(response._1).withBody(response._2)))
-  }
 }

@@ -18,11 +18,11 @@ package uk.gov.hmrc.contactadvisors.controllers
 
 import java.util.UUID
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import play.api.Logger
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.{ I18nSupport, MessagesApi }
 import play.api.mvc._
 import uk.gov.hmrc.contactadvisors.connectors.models.ExternalReferenceV2
 import uk.gov.hmrc.contactadvisors.domain._
@@ -31,19 +31,19 @@ import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.{DataEvent, EventTypes}
-import uk.gov.hmrc.play.bootstrap.controller.{FrontendController}
+import uk.gov.hmrc.play.audit.model.{ DataEvent, EventTypes }
+import uk.gov.hmrc.play.bootstrap.controller.{ FrontendController }
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future}
+import scala.concurrent.{ Future }
 
 @Singleton
-class SecureMessageController @Inject()(controllerComponents: MessagesControllerComponents,
-                                        customerAdviceAudit: CustomerAdviceAudit,
-                                        secureMessageService: SecureMessageService,
-                                        messagesApi: MessagesApi)
-                                       (implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig)
-  extends FrontendController(controllerComponents) with I18nSupport {
+class SecureMessageController @Inject()(
+  controllerComponents: MessagesControllerComponents,
+  customerAdviceAudit: CustomerAdviceAudit,
+  secureMessageService: SecureMessageService,
+  messagesApi: MessagesApi)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig)
+    extends FrontendController(controllerComponents) with I18nSupport {
 
   def inbox(utr: String) = Action.async { implicit request =>
     Future.successful(
@@ -68,8 +68,9 @@ class SecureMessageController @Inject()(controllerComponents: MessagesController
 
   def submit(utr: String) = Action.async { implicit request =>
     adviceForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(
-        BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
+      formWithErrors =>
+        Future.successful(
+          BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inbox(utr, formWithErrors))
       ),
       advice => {
         val result = secureMessageService.createMessage(advice, SaUtr(utr))
@@ -82,25 +83,27 @@ class SecureMessageController @Inject()(controllerComponents: MessagesController
   }
 
   def submitV2() =
-    Action.async { implicit request => {
-      adviceFormV2.bindFromRequest.fold(
-        formWithErrors => Future.successful(
-          {
-            BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inboxV2(formWithErrors))
-          }
-        ),
-        advice => {
-          def generateExternalRefID = UUID.randomUUID().toString
+    Action.async { implicit request =>
+      {
+        adviceFormV2.bindFromRequest.fold(
+          formWithErrors =>
+            Future.successful(
+              {
+                BadRequest(uk.gov.hmrc.contactadvisors.views.html.secureMessage.inboxV2(formWithErrors))
+              }
+          ),
+          advice => {
+            def generateExternalRefID = UUID.randomUUID().toString
 
-          val externalReference = ExternalReferenceV2(generateExternalRefID)
-          val result = secureMessageService.createMessageV2(advice, externalReference)
-          customerAdviceAudit.auditAdviceV2(result, advice, externalReference)
-          result.map {
-            handleStorageResultV2(advice.recipientTaxidentifierValue, externalReference.id)
+            val externalReference = ExternalReferenceV2(generateExternalRefID)
+            val result = secureMessageService.createMessageV2(advice, externalReference)
+            customerAdviceAudit.auditAdviceV2(result, advice, externalReference)
+            result.map {
+              handleStorageResultV2(advice.recipientTaxidentifierValue, externalReference.id)
+            }
           }
-        }
-      )
-    }
+        )
+      }
     }
 
   def success(utr: String) = Action.async { implicit request =>
@@ -160,30 +163,30 @@ class SecureMessageController @Inject()(controllerComponents: MessagesController
 
   def adviceFormV2 = Form[AdviceV2](
     mapping(
-      "subject" -> nonEmptyText,
-      "content" -> nonEmptyText,
-      "recipientTaxidentifierName" -> nonEmptyText,
+      "subject"                     -> nonEmptyText,
+      "content"                     -> nonEmptyText,
+      "recipientTaxidentifierName"  -> nonEmptyText,
       "recipientTaxidentifierValue" -> nonEmptyText,
-      "recipientEmail" -> nonEmptyText,
-      "recipientNameLine1" -> nonEmptyText,
-      "messageType" -> nonEmptyText
+      "recipientEmail"              -> nonEmptyText,
+      "recipientNameLine1"          -> nonEmptyText,
+      "messageType"                 -> nonEmptyText
     )(AdviceV2.apply)(AdviceV2.unapply)
   )
 
   private def handleStorageResult(utr: String): StorageResult => Result = {
-    case AdviceStored(_) => Redirect(routes.SecureMessageController.success(utr))
-    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicate(utr))
-    case UnknownTaxId => Redirect(routes.SecureMessageController.unknown(utr))
-    case UserIsNotPaperless => Redirect(routes.SecureMessageController.notPaperless(utr))
+    case AdviceStored(_)      => Redirect(routes.SecureMessageController.success(utr))
+    case AdviceAlreadyExists  => Redirect(routes.SecureMessageController.duplicate(utr))
+    case UnknownTaxId         => Redirect(routes.SecureMessageController.unknown(utr))
+    case UserIsNotPaperless   => Redirect(routes.SecureMessageController.notPaperless(utr))
     case UnexpectedError(msg) => Redirect(routes.SecureMessageController.unexpected(utr))
   }
 
   private def handleStorageResultV2(recipientTaxIdentifierValue: String, externalRef: String): StorageResult => Result = {
-    case AdviceStored(messageId) => Redirect(routes.SecureMessageController.successV2()).flashing("taxid" -> s"${recipientTaxIdentifierValue}",
-      "messageId" -> s"${messageId}",
-      "externalRef" -> s"${externalRef}")
-    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicateV2()).flashing("taxid" -> s"${recipientTaxIdentifierValue}")
-    case _ => Redirect(routes.SecureMessageController.unexpectedV2()).flashing("taxid" -> s"${recipientTaxIdentifierValue}")
+    case AdviceStored(messageId) =>
+      Redirect(routes.SecureMessageController.successV2())
+        .flashing("taxid" -> s"$recipientTaxIdentifierValue", "messageId" -> s"$messageId", "externalRef" -> s"$externalRef")
+    case AdviceAlreadyExists => Redirect(routes.SecureMessageController.duplicateV2()).flashing("taxid"  -> s"$recipientTaxIdentifierValue")
+    case _                   => Redirect(routes.SecureMessageController.unexpectedV2()).flashing("taxid" -> s"$recipientTaxIdentifierValue")
   }
 }
 
@@ -204,17 +207,19 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
       )
 
     result.onComplete { res1 =>
-      res1.map {
-        case AdviceStored(messageId) => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
-        case AdviceAlreadyExists => createEvent(Map("reason" -> "Duplicate Message Found"), EventTypes.Failed, "Message Not Stored")
-        case UnknownTaxId => createEvent(Map("reason" -> "Unknown Tax Id"), EventTypes.Failed, "Message Not Stored")
-        case UserIsNotPaperless => createEvent(Map("reason" -> "User is not paperless"), EventTypes.Failed, "Message Not Stored")
-        case UnexpectedError(errorMessage) => createEvent(Map("reason" -> s"Unexpected Error: ${errorMessage}"), EventTypes.Failed, "Message Not Stored")
-      }.
-        recover { case ex =>
-          createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
-        }.
-        foreach { ev =>
+      res1
+        .map {
+          case AdviceStored(messageId)       => createEvent(Map("secureMessageId" -> messageId, "messageId" -> messageId), EventTypes.Succeeded, "Message Stored")
+          case AdviceAlreadyExists           => createEvent(Map("reason"          -> "Duplicate Message Found"), EventTypes.Failed, "Message Not Stored")
+          case UnknownTaxId                  => createEvent(Map("reason"          -> "Unknown Tax Id"), EventTypes.Failed, "Message Not Stored")
+          case UserIsNotPaperless            => createEvent(Map("reason"          -> "User is not paperless"), EventTypes.Failed, "Message Not Stored")
+          case UnexpectedError(errorMessage) => createEvent(Map("reason"          -> s"Unexpected Error: $errorMessage"), EventTypes.Failed, "Message Not Stored")
+        }
+        .recover {
+          case ex =>
+            createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
+        }
+        .foreach { ev =>
           auditConnector.sendEvent(ev).onFailure {
             case err => Logger.error("Could not audit event", err)
           }
@@ -229,37 +234,53 @@ class CustomerAdviceAudit @Inject()(auditConnector: AuditConnector) {
         auditType = auditType,
         tags = Map(EventKeys.TransactionName -> transactionName),
         detail = Map(
-        ) ++ messageInfo
+          ) ++ messageInfo
       )
 
     result.onComplete { res1 =>
-      res1.map {
-        case AdviceStored(messageId) =>
-          createEvent(Map(
-            "messageType" -> advice.messageType,
-            "messageId" -> messageId,
-            "externalRef" -> externalReference.id,
-            "fhddsRef" -> advice.recipientTaxidentifierValue
-          ),
-            EventTypes.Succeeded, "Message Created")
-        case AdviceAlreadyExists => createEvent(Map(
-          "messageType" -> advice.messageType,
-          "messageId" -> "",
-          "externalRef" -> externalReference.id,
-          "fhddsRef" -> advice.recipientTaxidentifierValue
-        ), EventTypes.Succeeded, "Message Duplicate Request")
-        case UnexpectedError(errorMessage) => createEvent(Map(
-          "messageType" -> advice.messageType,
-          "messageId" -> "",
-          "externalRef" -> externalReference.id,
-          "fhddsRef" -> advice.recipientTaxidentifierValue,
-          "reason" -> s"${errorMessage}"), EventTypes.Failed, "Message Not Created")
-        case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")
-      }.
-        recover { case ex =>
-          createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
-        }.
-        foreach { ev =>
+      res1
+        .map {
+          case AdviceStored(messageId) =>
+            createEvent(
+              Map(
+                "messageType" -> advice.messageType,
+                "messageId"   -> messageId,
+                "externalRef" -> externalReference.id,
+                "fhddsRef"    -> advice.recipientTaxidentifierValue
+              ),
+              EventTypes.Succeeded,
+              "Message Created"
+            )
+          case AdviceAlreadyExists =>
+            createEvent(
+              Map(
+                "messageType" -> advice.messageType,
+                "messageId"   -> "",
+                "externalRef" -> externalReference.id,
+                "fhddsRef"    -> advice.recipientTaxidentifierValue
+              ),
+              EventTypes.Succeeded,
+              "Message Duplicate Request"
+            )
+          case UnexpectedError(errorMessage) =>
+            createEvent(
+              Map(
+                "messageType" -> advice.messageType,
+                "messageId"   -> "",
+                "externalRef" -> externalReference.id,
+                "fhddsRef"    -> advice.recipientTaxidentifierValue,
+                "reason"      -> s"$errorMessage"
+              ),
+              EventTypes.Failed,
+              "Message Not Created"
+            )
+          case _ => createEvent(Map("reason" -> s"Unexpected Error"), EventTypes.Failed, "Message Not Stored")
+        }
+        .recover {
+          case ex =>
+            createEvent(Map("reason" -> s"Unexpected Error: ${ex.getMessage}"), EventTypes.Failed, "Message Not Stored")
+        }
+        .foreach { ev =>
           auditConnector.sendEvent(ev).onFailure {
             case err => Logger.error("Could not audit event")
           }

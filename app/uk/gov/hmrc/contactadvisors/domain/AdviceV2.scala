@@ -17,11 +17,11 @@
 package uk.gov.hmrc.contactadvisors.domain
 
 final case class AdviceV2(
-                           subject: String,
-                           content: String,
-                           recipientTaxidentifierName: String,
-                           recipientTaxidentifierValue: String,
-                           recipientEmail: String,
-                           recipientNameLine1: String,
-                           messageType: String
-                         )
+  subject: String,
+  content: String,
+  recipientTaxidentifierName: String,
+  recipientTaxidentifierValue: String,
+  recipientEmail: String,
+  recipientNameLine1: String,
+  messageType: String
+)

@@ -19,7 +19,7 @@ package uk.gov.hmrc.utils
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
 
 trait WithWiremock extends BeforeAndAfterAll with BeforeAndAfterEach { suite: Suite =>
 

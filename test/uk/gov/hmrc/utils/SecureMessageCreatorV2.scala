@@ -28,23 +28,9 @@ object SecureMessageCreatorV2 {
   val recipientNameLine1 = "A. N. Other"
   val messageType = "fhddsAlertMessage"
   val adviceWithUncleanContent =
-    AdviceV2(
-      subject,
-      uncleanContent,
-      recipientTaxidentifierName,
-      recipientTaxidentifierValue,
-      recipientEmail,
-      recipientNameLine1,
-      messageType)
+    AdviceV2(subject, uncleanContent, recipientTaxidentifierName, recipientTaxidentifierValue, recipientEmail, recipientNameLine1, messageType)
 
   val adviceWithCleanContent =
-    AdviceV2(
-      subject,
-      cleanContent,
-      recipientTaxidentifierName,
-      recipientTaxidentifierValue,
-      recipientEmail,
-      recipientNameLine1,
-      messageType)
+    AdviceV2(subject, cleanContent, recipientTaxidentifierName, recipientTaxidentifierValue, recipientEmail, recipientNameLine1, messageType)
 
 }

@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.contactadvisors.connectors.models
 
-import org.joda.time.{LocalDate}
+import org.joda.time.{ LocalDate }
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{Json, OFormat, _}
+import play.api.libs.json.{ Json, OFormat, _ }
 import uk.gov.hmrc.domain.SaUtr
-import play.api.libs.json.JodaWrites.{JodaDateTimeWrites => _, _}
+import play.api.libs.json.JodaWrites.{ JodaDateTimeWrites => _, _ }
 import play.api.libs.json.JodaReads._
 
 final case class Details(formId: String, statutory: Boolean, paperSent: Boolean, batchId: Option[String])
@@ -39,12 +39,19 @@ object Recipient {
   implicit val taxIdWrites: Format[SaUtr] = (
     (__ \ "name").format[String] and
       (__ \ "value").format[String]
-    ) ((_, value) => SaUtr(value), (m => (m.name, m.value)))
+  )((_, value) => SaUtr(value), (m => (m.name, m.value)))
 
   implicit val formats = Json.format[Recipient]
 }
 
-case class SecureMessage(recipient: Recipient, externalRef: ExternalReference, messageType: String, subject: String, content: String, validFrom: LocalDate, details: Details)
+case class SecureMessage(
+  recipient: Recipient,
+  externalRef: ExternalReference,
+  messageType: String,
+  subject: String,
+  content: String,
+  validFrom: LocalDate,
+  details: Details)
 
 object SecureMessage {
   implicit val dateFormatDefault = new Format[LocalDate] {
@@ -54,7 +61,14 @@ object SecureMessage {
   implicit val formats = Json.format[SecureMessage]
 }
 
-case class SecureMessageV2(recipient: RecipientV2, externalRef: ExternalReferenceV2, messageType: String, subject: String, content: String, validFrom: LocalDate, alertQueue: String = "PRIORITY")
+case class SecureMessageV2(
+  recipient: RecipientV2,
+  externalRef: ExternalReferenceV2,
+  messageType: String,
+  subject: String,
+  content: String,
+  validFrom: LocalDate,
+  alertQueue: String = "PRIORITY")
 
 case class FHDDSTaxIdentifier(value: String, name: String)
 
@@ -69,8 +83,7 @@ object RecipientV2 {
 
 case class TaxpayerName(line1: String)
 
-object TaxpayerName {
-}
+object TaxpayerName {}
 
 final case class ExternalReferenceV2(id: String, source: String = "sees")
 
@@ -85,4 +98,3 @@ object SecureMessageV2 {
   }
   implicit val formats = Json.format[SecureMessageV2]
 }
-
