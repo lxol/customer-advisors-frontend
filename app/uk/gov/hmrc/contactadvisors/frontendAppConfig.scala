@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.contactadvisors
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
+import javax.inject.{ Inject, Singleton }
+import play.api.{ Configuration, Environment }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 trait AppConfig {
@@ -28,9 +28,7 @@ trait AppConfig {
 }
 
 @Singleton
-class FrontendAppConfig @Inject()(val runModeConfiguration: Configuration,
-                                  val environment: Environment,
-                                  servicesConfig: ServicesConfig) extends AppConfig {
+class FrontendAppConfig @Inject()(val runModeConfiguration: Configuration, val environment: Environment, servicesConfig: ServicesConfig) extends AppConfig {
 
   private def loadConfig(key: String) = runModeConfiguration.getOptional[String](key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
 

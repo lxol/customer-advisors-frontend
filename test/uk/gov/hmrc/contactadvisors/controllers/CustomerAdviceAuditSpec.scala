@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@ package uk.gov.hmrc.contactadvisors.controllers
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
-import org.scalatest.concurrent.{Eventually, IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.{ Eventually, IntegrationPatience, ScalaFutures }
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.MessagesApi
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.{Configuration, Environment}
+import play.api.{ Configuration, Environment }
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.EventKeys
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.http.connector.{ AuditConnector, AuditResult }
 import uk.gov.hmrc.play.audit.model.DataEvent
 
 import scala.concurrent.Future
@@ -127,16 +127,13 @@ class CustomerAdviceAuditSpec extends PlaySpec with ScalaFutures with GuiceOneAp
     }
   }
 
-
   trait TestCase extends MockitoSugar {
 
     val secureMessageServiceMock = mock[SecureMessageService]
     val customerAdviceAuditMock = new CustomerAdviceAudit(auditConnectorMock)
 
     val env = Environment.simple()
-    val configuration = Configuration.reference ++ Configuration.from(Map(
-      "Test.google-analytics.token" -> "token",
-      "Test.google-analytics.host" -> "host"))
+    val configuration = Configuration.reference ++ Configuration.from(Map("Test.google-analytics.token" -> "token", "Test.google-analytics.host" -> "host"))
 
     val auditConnectorMock = mock[AuditConnector]
     val customerAdviceAudit = new CustomerAdviceAudit(auditConnectorMock)

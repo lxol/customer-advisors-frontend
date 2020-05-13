@@ -19,7 +19,7 @@ package uk.gov.hmrc.contactadvisors
 import org.joda.time.DateTime
 import org.jsoup.Jsoup
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatestplus.play.PlaySpec
 import play.api.Mode
 import play.api.http.Status._
@@ -28,10 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.integration.ServiceSpec
 import scala.concurrent.duration._
 
-class ApiISpec extends PlaySpec
-  with ScalaFutures
-  with BeforeAndAfterAll
-  with Eventually with ServiceSpec {
+class ApiISpec extends PlaySpec with ScalaFutures with BeforeAndAfterAll with Eventually with ServiceSpec {
 
   override val applicationMode = Mode.Test
   def externalServices: Seq[String] = Seq.empty
@@ -45,27 +42,30 @@ class ApiISpec extends PlaySpec
       val content = DateTime.now().toString
       val fhddsRef = "XZFH00000100024"
       val wsClient = app.injector.instanceOf[WSClient]
-      val response = wsClient.url(resource("secure-message/customer-advisors-frontend/submit")).post(Map(
-        "content" -> s"${content}21",
-        "subject" -> "mysubject",
-        "recipientTaxidentifierName" -> "sautr",
-        "recipientTaxidentifierValue" -> fhddsRef,
-        "recipientEmail" -> "test@test.com",
-        "recipientNameLine1" -> "line1",
-        "messageType" -> "mType"
-      )).futureValue
+      val response = wsClient
+        .url(resource("secure-message/customer-advisors-frontend/submit"))
+        .post(Map(
+          "content"                     -> s"${content}21",
+          "subject"                     -> "mysubject",
+          "recipientTaxidentifierName"  -> "sautr",
+          "recipientTaxidentifierValue" -> fhddsRef,
+          "recipientEmail"              -> "test@test.com",
+          "recipientNameLine1"          -> "line1",
+          "messageType"                 -> "mType"
+        ))
+        .futureValue
 
-    response.status must be(OK)
+      response.status must be(OK)
 
-    val body =  response.body
+      val body = response.body
 
-    val document = Jsoup.parse(body)
+      val document = Jsoup.parse(body)
 
       withClue("result page title") {
         document.title() must be("Advice creation successful")
       }
       withClue("result page FHDDS Reference") {
-        document.select("ul li").get(0).text() must be(s"FHDDS Reference: ${fhddsRef}")
+        document.select("ul li").get(0).text() must be(s"FHDDS Reference: $fhddsRef")
       }
       withClue("result page Message Id") {
         document.select("ul li").get(1).text() must startWith regex "Id: [0-9a-f]+"
@@ -81,15 +81,18 @@ class ApiISpec extends PlaySpec
       val wrongEmail = "foobar"
       val wsClient = app.injector.instanceOf[WSClient]
 
-      val response = wsClient.url(resource("secure-message/customer-advisors-frontend/submit")).post(Map(
-        "content" -> s"${content}21",
-        "subject" -> "mysubject",
-        "recipientTaxidentifierName" -> "sautr",
-        "recipientTaxidentifierValue" -> s"${fhddsRef}",
-        "recipientEmail" -> s"${wrongEmail}",
-        "recipientNameLine1" -> "rLine1",
-        "messageType" -> "mType"
-      )).futureValue
+      val response = wsClient
+        .url(resource("secure-message/customer-advisors-frontend/submit"))
+        .post(Map(
+          "content"                     -> s"${content}21",
+          "subject"                     -> "mysubject",
+          "recipientTaxidentifierName"  -> "sautr",
+          "recipientTaxidentifierValue" -> s"$fhddsRef",
+          "recipientEmail"              -> s"$wrongEmail",
+          "recipientNameLine1"          -> "rLine1",
+          "messageType"                 -> "mType"
+        ))
+        .futureValue
 
       response.status must be(OK)
       val body = response.body
@@ -105,7 +108,7 @@ class ApiISpec extends PlaySpec
         document.select("h2").text().trim must include(s"Failed")
       }
       withClue("result page alert message") {
-        document.select("p.alert__message").text() must include (s"${fhddsRef}")
+        document.select("p.alert__message").text() must include(s"$fhddsRef")
       }
     }
   }

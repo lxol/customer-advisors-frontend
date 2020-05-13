@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,38 +20,32 @@ import java.util.UUID
 
 import org.jsoup.Jsoup
 import org.scalatest.Inside
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.Application
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.mvc.{ MessagesControllerComponents, Result }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
-import uk.gov.hmrc.contactadvisors.dependencies.{EntityResolverStub, MessageStub}
+import uk.gov.hmrc.contactadvisors.dependencies.{ EntityResolverStub, MessageStub }
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
 import uk.gov.hmrc.domain.SaUtr
-import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
+import uk.gov.hmrc.utils.{ SecureMessageCreator, WithWiremock }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class SecureMessageControllerSpec
-  extends PlaySpec
-    with GuiceOneAppPerSuite
-    with ScalaFutures
-    with IntegrationPatience
-    with WithWiremock
-    with EntityResolverStub
-    with MessageStub {
+    extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures with IntegrationPatience with WithWiremock with EntityResolverStub with MessageStub {
 
   implicit lazy override val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "Test.microservice.services.message.port" -> "10100",
-          "Test.microservice.services.entity-resolver.port" -> "10100"
+      "Test.microservice.services.message.port"         -> "10100",
+      "Test.microservice.services.entity-resolver.port" -> "10100"
     )
     .build()
 
@@ -67,7 +61,8 @@ class SecureMessageControllerSpec
     app.injector.instanceOf[MessagesControllerComponents],
     app.injector.instanceOf[CustomerAdviceAudit],
     app.injector.instanceOf[SecureMessageService],
-    app.injector.instanceOf[MessagesApi])(app.injector.instanceOf[FrontendAppConfig]) {
+    app.injector.instanceOf[MessagesApi]
+  )(app.injector.instanceOf[FrontendAppConfig]) {
     def auditSource: String = "customer-advisors-frontend"
   }
   "GET /inbox/:utr" should {
@@ -164,7 +159,6 @@ class SecureMessageControllerSpec
         submitAdvice.map(_.tagName()) must be(Some("button"))
         submitAdvice.map(_.text()) must be(Some("Send"))
       }
-
 
       val recipientTaxIdentifierName = formElements.find(_.id() == "recipient_taxidentifier_name")
       withClue("advice recipient taxidentifier name field") {
@@ -282,31 +276,31 @@ class SecureMessageControllerSpec
 
   "submission result page" should {
     "contain correct message for success" in {
-      controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.success(utr.value)(getRequest) shouldContainPageWithTitleAndMessage (
         "Advice creation successful", utr.value,
         "Thanks. Your reply has been successfully received by the customer's Tax Account secure message Inbox."
       )
     }
     "contain correct message for duplicate" in {
-      controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.duplicate(utr.value)(getRequest) shouldContainPageWithTitleAndMessage (
         "Advice already exists", utr.value,
         "This message appears to be a duplicate of a message already received in the customer's Tax Account secure message Inbox."
       )
     }
     "contain correct message for unknown taxid" in {
-      controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.unknown(utr.value)(getRequest) shouldContainPageWithTitleAndMessage (
         "Unknown UTR", utr.value,
         "The SA-UTR provided is not recognised by the Digital Tax Platform."
       )
     }
     "contain correct message for not paperless user" in {
-      controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.notPaperless(utr.value)(getRequest) shouldContainPageWithTitleAndMessage (
         "User is not paperless", utr.value,
         s"The customer is not registered for paperless communications."
       )
     }
     "contain correct message for unexpected error" in {
-      controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage(
+      controller.unexpected(utr.value)(getRequest) shouldContainPageWithTitleAndMessage (
         "Unexpected error", utr.value,
         "There is an unexpected problem. There may be an issue with the connection. Please try again."
       )
@@ -351,7 +345,7 @@ class SecureMessageControllerSpec
 
       redirectLocation(result) match {
         case Some(redirect) => redirect must startWith(s"/secure-message$url")
-        case _ => fail("redirect location should always be present")
+        case _              => fail("redirect location should always be present")
       }
 
     }

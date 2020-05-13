@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,36 +21,33 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration._
 import com.github.tomakehurst.wiremock.http.Fault
-import javax.inject.{Inject, Singleton}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import javax.inject.{ Inject, Singleton }
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatestplus.play.{PlaySpec}
+import org.scalatestplus.play.{ PlaySpec }
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.contactadvisors.domain.{AdviceAlreadyExists, AdviceStored, UnexpectedError}
+import play.api.{ Configuration, Environment }
+import uk.gov.hmrc.contactadvisors.domain.{ AdviceAlreadyExists, AdviceStored, UnexpectedError }
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.utils.{SecureMessageCreator, WithWiremock}
+import uk.gov.hmrc.utils.{ SecureMessageCreator, WithWiremock }
 
 @Singleton
-class TestMessageConnector @Inject()(http: HttpClient,
-                                     override val runModeConfiguration: Configuration,
-                                     servicesConfig: ServicesConfig,
-                                     override val environment: Environment)
-  extends MessageConnector(http, runModeConfiguration, servicesConfig, environment) {
+class TestMessageConnector @Inject()(
+  http: HttpClient,
+  override val runModeConfiguration: Configuration,
+  servicesConfig: ServicesConfig,
+  override val environment: Environment)
+    extends MessageConnector(http, runModeConfiguration, servicesConfig, environment) {
 
   override lazy val serviceUrl: String = s"http://localhost:58008"
 }
 
-class MessageConnectorSpec() extends PlaySpec
-  with GuiceOneAppPerSuite
-  with ScalaFutures
-  with WithWiremock
-  with TableDrivenPropertyChecks
-  with IntegrationPatience {
+class MessageConnectorSpec()
+    extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures with WithWiremock with TableDrivenPropertyChecks with IntegrationPatience {
 
   val messagePort = 58008
   override lazy val wireMockServer = new WireMockServer(wireMockConfig().port(messagePort))
@@ -76,9 +73,7 @@ class MessageConnectorSpec() extends PlaySpec
     implicit val hc = HeaderCarrier()
 
     "return the message id from the response" in new TestCase {
-      givenThat(post(urlEqualTo(expectedPath)).
-        willReturn(aResponse().
-          withStatus(Status.CREATED).withBody("""{"id":"12341234"}""")))
+      givenThat(post(urlEqualTo(expectedPath)).willReturn(aResponse().withStatus(Status.CREATED).withBody("""{"id":"12341234"}""")))
 
       connector.create(secureMessage).futureValue must be(AdviceStored("12341234"))
     }
@@ -93,10 +88,12 @@ class MessageConnectorSpec() extends PlaySpec
       s"return Failure with reason for status=$statusCode" in new TestCase {
 
         val errorMessage = Json.obj("reason" -> "something went wrong")
-        givenThat(post(urlEqualTo(expectedPath))
-          .willReturn(aResponse()
-            .withStatus(statusCode)
-            .withBody(errorMessage.toString())))
+        givenThat(
+          post(urlEqualTo(expectedPath))
+            .willReturn(
+              aResponse()
+                .withStatus(statusCode)
+                .withBody(errorMessage.toString())))
 
         val response = connector.create(secureMessage).futureValue
         response match {
@@ -110,9 +107,10 @@ class MessageConnectorSpec() extends PlaySpec
     }
 
     "fail when an IOException occurs when saving" in new TestCase {
-      givenThat(post(urlEqualTo(expectedPath))
-        .willReturn(aResponse()
-          .withFault(Fault.RANDOM_DATA_THEN_CLOSE)))
+      givenThat(
+        post(urlEqualTo(expectedPath))
+          .willReturn(aResponse()
+            .withFault(Fault.RANDOM_DATA_THEN_CLOSE)))
 
       val response = connector.create(secureMessage).futureValue
       response must be(UnexpectedError("Remotely closed"))
@@ -120,7 +118,7 @@ class MessageConnectorSpec() extends PlaySpec
   }
 
   trait TestCase {
-   // val messageServiceBaseUrl = s"http://localhost:$messagePort"
+    // val messageServiceBaseUrl = s"http://localhost:$messagePort"
     val expectedPath = s"/messages"
 
     val secureMessage = SecureMessageCreator.message

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package uk.gov.hmrc.contactadvisors.domain
 
 final case class AdviceV2(
-                           subject: String,
-                           content: String,
-                           recipientTaxidentifierName: String,
-                           recipientTaxidentifierValue: String,
-                           recipientEmail: String,
-                           recipientNameLine1: String,
-                           messageType: String
-                         )
+  subject: String,
+  content: String,
+  recipientTaxidentifierName: String,
+  recipientTaxidentifierValue: String,
+  recipientEmail: String,
+  recipientNameLine1: String,
+  messageType: String
+)

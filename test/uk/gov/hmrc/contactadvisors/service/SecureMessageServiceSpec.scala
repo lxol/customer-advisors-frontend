@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
 import uk.gov.hmrc.contactadvisors.connectors.models.SecureMessage
-import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
+import uk.gov.hmrc.contactadvisors.connectors.{ EntityResolverConnector, MessageConnector, PaperlessPreference }
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
@@ -70,7 +70,8 @@ class SecureMessageServiceSpec extends PlaySpec with MockitoSugar with ScalaFutu
 
     "handle case when paperless check fails" in new TestCase {
 
-      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr)).thenReturn(Future.failed(UnexpectedFailure("Could not determine if user with utr is paperless")))
+      when(entityResolverConnectorMock.validPaperlessUserWith(validSaUtr))
+        .thenReturn(Future.failed(UnexpectedFailure("Could not determine if user with utr is paperless")))
 
       val storageResult = secureMessageService.createMessage(advice, validSaUtr).futureValue
 

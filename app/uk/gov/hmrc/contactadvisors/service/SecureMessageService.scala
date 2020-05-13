@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,34 +18,36 @@ package uk.gov.hmrc.contactadvisors.service
 
 import java.util.UUID
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import uk.gov.hmrc.contactadvisors.connectors.models._
-import uk.gov.hmrc.contactadvisors.connectors.{EntityResolverConnector, MessageConnector, PaperlessPreference}
+import uk.gov.hmrc.contactadvisors.connectors.{ EntityResolverConnector, MessageConnector, PaperlessPreference }
 import uk.gov.hmrc.contactadvisors.domain._
 import uk.gov.hmrc.domain.SaUtr
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 @Singleton
 class SecureMessageService @Inject()(messageConnector: MessageConnector, entityResolverConnector: EntityResolverConnector) {
 
   def generateExternalRefID = UUID.randomUUID().toString
 
-  def createMessage(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
-
-    entityResolverConnector.validPaperlessUserWith(saUtr).flatMap {
-      case Some(PaperlessPreference(true)) => for {
-        storageResult <- messageConnector.create(secureMessageFrom(advice, saUtr))
-      } yield storageResult
-      case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
-      case None => Future.successful(UnknownTaxId)
-    }.recover {
-      case UnexpectedFailure(reason) => UnexpectedError(s"Creation of the advice failed. Reason: $reason")
-    }
-  }
+  def createMessage(advice: Advice, saUtr: SaUtr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] =
+    entityResolverConnector
+      .validPaperlessUserWith(saUtr)
+      .flatMap {
+        case Some(PaperlessPreference(true)) =>
+          for {
+            storageResult <- messageConnector.create(secureMessageFrom(advice, saUtr))
+          } yield storageResult
+        case Some(PaperlessPreference(false)) => Future.successful(UserIsNotPaperless)
+        case None                             => Future.successful(UnknownTaxId)
+      }
+      .recover {
+        case UnexpectedFailure(reason) => UnexpectedError(s"Creation of the advice failed. Reason: $reason")
+      }
 
   def secureMessageFrom(advice: Advice, saUtr: SaUtr): SecureMessage = {
     val recipient = Recipient(saUtr)
@@ -58,10 +60,8 @@ class SecureMessageService @Inject()(messageConnector: MessageConnector, entityR
     SecureMessage(recipient, externalReference, messageType, subject, content, validFrom, details)
   }
 
-  def createMessageV2(advice: AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] = {
+  def createMessageV2(advice: AdviceV2, externalReference: ExternalReferenceV2)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[StorageResult] =
     messageConnector.createV2(secureMessageFromV2(advice, externalReference))
-  }
-
 
   def secureMessageFromV2(advice: AdviceV2, externalReference: ExternalReferenceV2): SecureMessageV2 = {
     val taxpayerName = TaxpayerName(advice.recipientNameLine1)

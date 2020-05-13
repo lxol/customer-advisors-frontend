@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,29 @@ package uk.gov.hmrc.contactadvisors.controllers
 
 import org.jsoup.Jsoup
 import org.scalatest.Inside
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.{ IntegrationPatience, ScalaFutures }
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.mvc.{ MessagesControllerComponents, Result }
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.contactadvisors.FrontendAppConfig
 import uk.gov.hmrc.contactadvisors.dependencies.MessageStubV2
 import uk.gov.hmrc.contactadvisors.service.SecureMessageService
-import uk.gov.hmrc.utils.{SecureMessageCreatorV2, WithWiremock}
+import uk.gov.hmrc.utils.{ SecureMessageCreatorV2, WithWiremock }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-class SecureMessageControllerV2Spec
-  extends PlaySpec
-    with GuiceOneAppPerSuite
-    with ScalaFutures
-    with IntegrationPatience
-    with WithWiremock
-    with MessageStubV2 {
+class SecureMessageControllerV2Spec extends PlaySpec with GuiceOneAppPerSuite with ScalaFutures with IntegrationPatience with WithWiremock with MessageStubV2 {
 
   implicit lazy override val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "Test.microservice.services.message.port" -> "10100",
+      "Test.microservice.services.message.port"         -> "10100",
       "Test.microservice.services.entity-resolver.port" -> "10100"
     )
     .build()
@@ -117,7 +111,6 @@ class SecureMessageControllerV2Spec
         submitAdvice.map(_.text()) must be(Some("Send"))
       }
 
-
       val recipientTaxIdentifierName = formElements.find(_.id() == "recipient_taxidentifier_name")
       withClue("advice recipient taxidentifier name field") {
         Inside.inside(adviceSubject) {
@@ -164,12 +157,12 @@ class SecureMessageControllerV2Spec
     "indicate a bad request when any of the form elements are empty" in {
       val emptySubject = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> content,
-          "recipientTaxidentifierName" -> recipientTaxidentifierName,
+          "content"                     -> content,
+          "recipientTaxidentifierName"  -> recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
-          "recipientEmail" -> recipientEmail,
-          "recipientNameLine1" -> recipientNameLine1,
-          "messageType" -> messageType
+          "recipientEmail"              -> recipientEmail,
+          "recipientNameLine1"          -> recipientNameLine1,
+          "messageType"                 -> messageType
         )
       )
       Jsoup.parse(contentAsString(emptySubject)).getElementsByClass("error-notification").asScala must have size 1
@@ -177,12 +170,12 @@ class SecureMessageControllerV2Spec
 
       val emptyMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "subject" -> subject,
-          "recipientTaxidentifierName" -> recipientTaxidentifierName,
+          "subject"                     -> subject,
+          "recipientTaxidentifierName"  -> recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> recipientTaxidentifierValue,
-          "recipientEmail" -> recipientEmail,
-          "recipientNameLine1" -> recipientNameLine1,
-          "messageType" -> messageType
+          "recipientEmail"              -> recipientEmail,
+          "recipientNameLine1"          -> recipientNameLine1,
+          "messageType"                 -> messageType
         )
       )
       Jsoup.parse(contentAsString(emptyMessage)).getElementsByClass("error-notification").asScala must have size 1
@@ -200,13 +193,13 @@ class SecureMessageControllerV2Spec
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> advice.content,
-          "subject" -> advice.subject,
-          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "content"                     -> advice.content,
+          "subject"                     -> advice.subject,
+          "recipientTaxidentifierName"  -> advice.recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
-          "recipientEmail" -> advice.recipientEmail,
-          "recipientNameLine1" -> advice.recipientNameLine1,
-          "messageType" -> advice.messageType
+          "recipientEmail"              -> advice.recipientEmail,
+          "recipientNameLine1"          -> advice.recipientNameLine1,
+          "messageType"                 -> advice.messageType
         )
       )
 
@@ -219,13 +212,13 @@ class SecureMessageControllerV2Spec
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> advice.content,
-          "subject" -> advice.subject,
-          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "content"                     -> advice.content,
+          "subject"                     -> advice.subject,
+          "recipientTaxidentifierName"  -> advice.recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
-          "recipientEmail" -> advice.recipientEmail,
-          "recipientNameLine1" -> advice.recipientNameLine1,
-          "messageType" -> advice.messageType
+          "recipientEmail"              -> advice.recipientEmail,
+          "recipientNameLine1"          -> advice.recipientNameLine1,
+          "messageType"                 -> advice.messageType
         )
       )
 
@@ -238,13 +231,13 @@ class SecureMessageControllerV2Spec
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> advice.content,
-          "subject" -> advice.subject,
-          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "content"                     -> advice.content,
+          "subject"                     -> advice.subject,
+          "recipientTaxidentifierName"  -> advice.recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
-          "recipientEmail" -> advice.recipientEmail,
-          "recipientNameLine1" -> advice.recipientNameLine1,
-          "messageType" -> advice.messageType
+          "recipientEmail"              -> advice.recipientEmail,
+          "recipientNameLine1"          -> advice.recipientNameLine1,
+          "messageType"                 -> advice.messageType
         )
       )
 
@@ -257,19 +250,18 @@ class SecureMessageControllerV2Spec
 
       val xssMessage = controller.submitV2()(
         FakeRequest().withFormUrlEncodedBody(
-          "content" -> advice.content,
-          "subject" -> advice.subject,
-          "recipientTaxidentifierName" -> advice.recipientTaxidentifierName,
+          "content"                     -> advice.content,
+          "subject"                     -> advice.subject,
+          "recipientTaxidentifierName"  -> advice.recipientTaxidentifierName,
           "recipientTaxidentifierValue" -> advice.recipientTaxidentifierValue,
-          "recipientEmail" -> advice.recipientEmail,
-          "recipientNameLine1" -> advice.recipientNameLine1,
-          "messageType" -> advice.messageType
+          "recipientEmail"              -> advice.recipientEmail,
+          "recipientNameLine1"          -> advice.recipientNameLine1,
+          "messageType"                 -> advice.messageType
         )
       )
 
       xssMessage returnsRedirectTo s"/customer-advisors-frontend/inbox/unexpected"
     }
-
 
   }
   "submission result page" should {
@@ -322,14 +314,14 @@ class SecureMessageControllerV2Spec
 
   def submissionOfCompletedForm() = controller.submitV2()(
     FakeRequest().withFormUrlEncodedBody(
-      "content" -> "content",
-      "subject" -> "subject",
-      "recipientTaxidentifierName" -> "name",
+      "content"                     -> "content",
+      "subject"                     -> "subject",
+      "recipientTaxidentifierName"  -> "name",
       "recipientTaxidentifierValue" -> "value",
-      "recipientEmail" -> "foo@bar.com",
-      "recipientNameLine1" -> "Mr. John Smith",
-      "messageType" -> "fhddsAlertMessage",
-      "alertQueue" -> "PRIORITY"
+      "recipientEmail"              -> "foo@bar.com",
+      "recipientNameLine1"          -> "Mr. John Smith",
+      "messageType"                 -> "fhddsAlertMessage",
+      "alertQueue"                  -> "PRIORITY"
     )
   )
 
@@ -338,7 +330,7 @@ class SecureMessageControllerV2Spec
       status(result) must be(303)
       redirectLocation(result) match {
         case Some(redirect) => redirect must (startWith(s"/secure-message$url"))
-        case _ => fail("redirect location should always be present")
+        case _              => fail("redirect location should always be present")
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,23 +28,9 @@ object SecureMessageCreatorV2 {
   val recipientNameLine1 = "A. N. Other"
   val messageType = "fhddsAlertMessage"
   val adviceWithUncleanContent =
-    AdviceV2(
-      subject,
-      uncleanContent,
-      recipientTaxidentifierName,
-      recipientTaxidentifierValue,
-      recipientEmail,
-      recipientNameLine1,
-      messageType)
+    AdviceV2(subject, uncleanContent, recipientTaxidentifierName, recipientTaxidentifierValue, recipientEmail, recipientNameLine1, messageType)
 
   val adviceWithCleanContent =
-    AdviceV2(
-      subject,
-      cleanContent,
-      recipientTaxidentifierName,
-      recipientTaxidentifierValue,
-      recipientEmail,
-      recipientNameLine1,
-      messageType)
+    AdviceV2(subject, cleanContent, recipientTaxidentifierName, recipientTaxidentifierValue, recipientEmail, recipientNameLine1, messageType)
 
 }
