@@ -48,7 +48,7 @@ class EmailController @Inject()(
       authorised(AuthProviders(PrivilegedApplication)) {
       //.retrieve(Retrievals.credentials) { creds =>
       //   .retrieve(Retrievals.allEnrolments and Retrievals.authorisedEnrolments and Retrievals.name and Retrievals.email and Retrievals.credentials) {
-      request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}"""")))(
+      request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}""")))(
         (json: JsValue) =>
           (json \ "parameters").toOption
             .collect {

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.contactadvisors
 
-import org.joda.time.DateTime
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatestplus.play.PlaySpec
@@ -25,6 +24,7 @@ import play.api.http.Status._
 import play.api.libs.json.{ JsValue, Json }
 import play.api.libs.ws.{ WSClient, WSResponse }
 import uk.gov.hmrc.contactadvisors.util.AuthHelper
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.integration.ServiceSpec
 
@@ -41,76 +41,78 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "POST /customer-advisors-frontend/email" should {
-    "sdfafasdf" in new TestCase {
-      val content = DateTime.now().toString
-      val fhddsRef = "XFH00000100024"
-      //val wsClient = app.injector.instanceOf[WSClient]
-      println(s"""**** ${resource("secure-message/hmrc/email")}""")
-      val strideToken = authHelper.buildStrideToken().futureValue
-      println(s"**** $strideToken")
-      val response = wsClient
-        .url(resource("/secure-message/hmrc/email"))
-        .withHttpHeaders(("authorization", strideToken))
-        // .withHttpHeaders(("Csrf-Token", "nocheck"))
-        .post(Map(
-          "content"                     -> s"${content}21",
-          "subject"                     -> "mysubject",
-          "recipientTaxidentifierName"  -> "sautr",
-          "recipientTaxidentifierValue" -> fhddsRef,
-          "recipientEmail"              -> "test@test.com",
-          "recipientNameLine1"          -> "line1",
-          "messageType"                 -> "mType"
-        ))
-        .futureValue
+    val emailUrl = resource("/secure-message/hmrc/email")
+    /*
+          "sdfafasdf" in new TestCase {
+            val content = DateTime.now().toString
+            val fhddsRef = "XFH00000100024"
+            //val wsClient = app.injector.instanceOf[WSClient]
+            println(s"""**** ${resource("secure-message/hmrc/email")}""")
+            val strideToken = authHelper.buildStrideToken().futureValue
+            println(s"**** $strideToken")
+            val response = wsClient
+              .url(resource("/secure-message/hmrc/email"))
+              .withHttpHeaders(("authorization", strideToken))
+              // .withHttpHeaders(("Csrf-Token", "nocheck"))
+              .post(Map(
+                "content"                     -> s"${content}21",
+                "subject"                     -> "mysubject",
+                "recipientTaxidentifierName"  -> "sautr",
+                "recipientTaxidentifierValue" -> fhddsRef,
+                "recipientEmail"              -> "test@test.com",
+                "recipientNameLine1"          -> "line1",
+                "messageType"                 -> "mType"
+              ))
+              .futureValue
 
-      response.status must be(OK)
+            response.status must be(OK)
 
-      // val body = response.body
+            // val body = response.body
 
-      // val document = Jsoup.parse(body)
+            // val document = Jsoup.parse(body)
 
-      /*
-          withClue("result page title") {
-              document.title() must be("Advice creation successful")
-          }
-          withClue("result page FHDDS Reference") {
-              document.select("ul li").get(0).text() must be(s"FHDDS Reference: $fhddsRef")
-          }
-          withClue("result page Message Id") {
-              document.select("ul li").get(1).text() must startWith regex "Id: [0-9a-f]+"
-          }
-          withClue("result page External Ref") {
-              document.select("ul li").get(2).text() must startWith regex "External Ref: [0-9a-f-]+"
+            /*
+                withClue("result page title") {
+                    document.title() must be("Advice creation successful")
+                }
+                withClue("result page FHDDS Reference") {
+                    document.select("ul li").get(0).text() must be(s"FHDDS Reference: $fhddsRef")
+                }
+                withClue("result page Message Id") {
+                    document.select("ul li").get(1).text() must startWith regex "Id: [0-9a-f]+"
+                }
+                withClue("result page External Ref") {
+                    document.select("ul li").get(2).text() must startWith regex "External Ref: [0-9a-f-]+"
+                }
+     */
           }
      */
-    }
-    "create a message" in new TestCase {
-      val content = DateTime.now().toString
-      val fhddsRef = "XFH00000100024"
-      //val wsClient = app.injector.instanceOf[WSClient]
-      println(s"""**** ${resource("secure-message/hmrc/email")}""")
-      val strideToken = authHelper.buildStrideToken().futureValue
-      println(s"**** $strideToken")
+    "send an email with valid payload and entitlements" in new TestCase {
       val response = wsClient
-        .url(resource("/secure-message/hmrc/email"))
-        .withHttpHeaders(("authorization", strideToken))
-        // .withHttpHeaders(("Csrf-Token", "nocheck"))
-        .post(
-          Json.parse("""
-                       |{
-                       |  "to": ["example@domain.com"],
-                       |  "templateId": "seiss_claim_now",
-                       |  "parameters": {
-                       |        "name": "Mr Joe Bloggs"
-                       |  },
-                       |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
-                       |}
-        """.stripMargin)
-        )
+        .url(emailUrl)
+        .withHttpHeaders(("authorization", validStrideToken))
+        .post(validJson)
         .futureValue
-
       response.status must be(ACCEPTED)
+    }
+    "return BadRequest if payload is not json" in new TestCase {
+      val response = wsClient
+        .url(emailUrl)
+        .withHttpHeaders(("authorization", validStrideToken))
+        .post("notjson")
+        .futureValue
+      response.status must be(BAD_REQUEST)
+      response.body must be("""{"error": "invalid payload"}""")
+    }
 
+    "return BadRequest if payload has extra parameters " in new TestCase {
+      val response = wsClient
+        .url(emailUrl)
+        .withHttpHeaders(("authorization", validStrideToken))
+        .post(extraParameters)
+        .futureValue
+      response.status must be(BAD_REQUEST)
+      response.body must be("""{"error": "invalid parameters"}""")
     }
     //   "redirect to the unexpected page when the form submission is unsuccessful" in {
 
@@ -155,6 +157,33 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
 
     val wsClient = app.injector.instanceOf[WSClient]
     lazy val authHelper = app.injector.instanceOf[AuthHelper]
+
+    val validStrideToken = authHelper.buildStrideToken().futureValue
+    val invalidStrideToken = authHelper.authorisedTokenFor(Nino("AB123456C")).futureValue
+    val validJson = Json.parse("""
+                                 |{
+                                 |  "to": ["example@domain.com"],
+                                 |  "templateId": "seiss_claim_now",
+                                 |  "parameters": {
+                                 |        "name": "Mr Joe Bloggs"
+                                 |  },
+                                 |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
+                                 |}
+        """.stripMargin)
+
+    val extraParameters = Json.parse("""
+                                       |{
+                                       |  "to": ["example@domain.com"],
+                                       |  "templateId": "seiss_claim_now",
+                                       |  "parameters": {
+                                       |        "name": "Mr Joe Bloggs",
+                                       |        "secret": "secret value"
+                                       |  },
+                                       |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
+                                       |}
+        """.stripMargin)
+
+    val invalidJson = Json.parse("""{"key": "value"}""")
     def sendEmail(payload: JsValue): Future[WSResponse] =
       wsClient
         .url(resource(s"/email"))
