@@ -114,6 +114,22 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
       response.status must be(BAD_REQUEST)
       response.body must be("""{"error": "invalid parameters"}""")
     }
+
+    "return FORBIDDEN if insufficient entitlements" in new TestCase {
+      val response = wsClient
+        .url(emailUrl)
+        .withHttpHeaders(("authorization", invalidStrideToken))
+        .post(validJson)
+        .futureValue
+      response.status must be(FORBIDDEN)
+    }
+    "return UNAUTHORIZED if not logged in" in new TestCase {
+      val response = wsClient
+        .url(emailUrl)
+        .post(validJson)
+        .futureValue
+      response.status must be(UNAUTHORIZED)
+    }
     //   "redirect to the unexpected page when the form submission is unsuccessful" in {
 
     //     val content = DateTime.now().toString
