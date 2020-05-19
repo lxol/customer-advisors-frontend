@@ -25,13 +25,14 @@ trait MicroService {
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
   lazy val externalServices = List(
-    ExternalService("AUTH"),
-    ExternalService("USER_DETAILS"),
-    ExternalService("PREFERENCES"),
-    ExternalService("MESSAGE"),
+    // ExternalService("AUTH"),
+    // ExternalService("USER_DETAILS"),
+    // ExternalService("PREFERENCES"),
+    // ExternalService("MESSAGE"),
+    ExternalService("EMAIL"),
     ExternalService("ENTITY_RESOLVER"),
-    ExternalService("HMRCDESKPRO"),
-    ExternalService("SA"),
+    // ExternalService("HMRCDESKPRO"),
+    // ExternalService("SA"),
     ExternalService("DATASTREAM", enableTestOnlyEndpoints = true)
   )
 

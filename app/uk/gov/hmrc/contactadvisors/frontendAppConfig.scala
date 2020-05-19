@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.contactadvisors
 
-import javax.inject.{ Inject, Singleton }
-import play.api.{ Configuration, Environment }
+import javax.inject.{Inject, Singleton}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 trait AppConfig {

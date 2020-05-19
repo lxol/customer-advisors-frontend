@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
-import javax.inject.{ Inject, Named, Singleton }
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.JsValue
 import play.api.mvc.Result
 import play.api.mvc.Results._
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -29,8 +30,11 @@ import scala.concurrent.Future
 @Singleton
 class EmailConnector @Inject()(
   http: HttpClient,
-  @Named("email-base-url") baseUrl: String
+  val servicesConfig: ServicesConfig
 ) {
+
+  val baseUrl: String = servicesConfig.baseUrl("email")
+
   def send(message: JsValue)(implicit headerCarrier: HeaderCarrier): Future[Result] =
     http.POST[JsValue, Result](s"$baseUrl/hmrc/email", message)
 
@@ -39,6 +43,7 @@ class EmailConnector @Inject()(
       Status(response.status)(response.body)
   }
 
+/*
   implicit def responseHandler: HttpReads[HttpResponse] =
     new HttpReads[HttpResponse] {
       def read(method: String, url: String, response: HttpResponse): HttpResponse =
@@ -47,4 +52,5 @@ class EmailConnector @Inject()(
           case _             => response
         }
     }
+*/
 }
