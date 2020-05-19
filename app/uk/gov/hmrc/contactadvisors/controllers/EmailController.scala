@@ -25,6 +25,8 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.contactadvisors.connectors.EmailConnector
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,21 +42,25 @@ class EmailController @Inject()(
 
   def sendEmail: Action[AnyContent] = Action.async { implicit request =>
     {
-      authorised(Enrolment("roleOne") and AuthProviders(PrivilegedApplication))
-        .retrieve(Retrievals.allEnrolments and Retrievals.authorisedEnrolments and Retrievals.name and Retrievals.email and Retrievals.credentials) {
-          case allEnrolments ~ authorisedEnrolments ~ name ~ email ~ credentials =>
-            request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}"""")))((json: JsValue) =>
-              (json \ "parameters").toOption
-                .collect {
-                  case x: JsObject if x.keys == Set("name") => emailConnector.send(request.body.asJson.get)
-                }
-                .getOrElse(Future.successful(BadRequest("""{"error": "invalid parameters"}"""))))
-        }
-        .recoverWith {
-          case _: InsufficientEnrolments =>
-            Future.successful(Unauthorized("""{"error": "insufficient enrolments"}"""))
-        }
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+      //authorised(Enrolment("roleOne") and AuthProviders(PrivilegedApplication))
+
+      authorised(AuthProviders(PrivilegedApplication)) {
+      //.retrieve(Retrievals.credentials) { creds =>
+      //   .retrieve(Retrievals.allEnrolments and Retrievals.authorisedEnrolments and Retrievals.name and Retrievals.email and Retrievals.credentials) {
+      request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}"""")))(
+        (json: JsValue) =>
+          (json \ "parameters").toOption
+            .collect {
+              case x: JsObject if x.keys == Set("name") => emailConnector.send(request.body.asJson.get)
+            }
+            .getOrElse(Future.successful(BadRequest("""{"error": "invalid parameters"}"""))))
     }
+  // .recoverWith {
+  //   case _: InsufficientEnrolments =>
+  //     Future.successful(Unauthorized("""{"error": "insufficient enrolments"}"""))
+  // }
+  }
   }
 
 }

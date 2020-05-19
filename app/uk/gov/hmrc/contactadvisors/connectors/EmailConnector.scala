@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.contactadvisors.connectors
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import play.api.libs.json.JsValue
 import play.api.mvc.Result
 import play.api.mvc.Results._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
@@ -43,7 +43,7 @@ class EmailConnector @Inject()(
       Status(response.status)(response.body)
   }
 
-/*
+  /*
   implicit def responseHandler: HttpReads[HttpResponse] =
     new HttpReads[HttpResponse] {
       def read(method: String, url: String, response: HttpResponse): HttpResponse =
@@ -52,5 +52,5 @@ class EmailConnector @Inject()(
           case _             => response
         }
     }
-*/
+ */
 }

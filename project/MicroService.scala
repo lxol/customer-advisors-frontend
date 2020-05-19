@@ -29,6 +29,12 @@ trait MicroService {
     // ExternalService("USER_DETAILS"),
     // ExternalService("PREFERENCES"),
     // ExternalService("MESSAGE"),
+
+  ExternalService("AUTH"),
+  ExternalService("AUTH_LOGIN_API"),
+  ExternalService("USER_DETAILS"),
+  ExternalService("PREFERENCES"),
+  ExternalService("IDENTITY_VERIFICATION", enableTestOnlyEndpoints = true),
     ExternalService("EMAIL"),
     ExternalService("ENTITY_RESOLVER"),
     // ExternalService("HMRCDESKPRO"),
@@ -70,17 +76,18 @@ trait MicroService {
       unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in IntegrationTest)(base => Seq(base / "it")),
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-      parallelExecution in IntegrationTest := false,
-      inConfig(IntegrationTest)(
-        scalafmtCoreSettings ++
-          Seq(
-            compileInputs in compile := Def.taskDyn {
-              val task = test in (resolvedScoped.value.scope in scalafmt.key)
-              val previousInputs = (compileInputs in compile).value
-              task.map(_ => previousInputs)
-            }.value
-          )
-      ))
+      parallelExecution in IntegrationTest := false
+      // inConfig(IntegrationTest)(
+      //   scalafmtCoreSettings ++
+      //     Seq(
+      //       compileInputs in compile := Def.taskDyn {
+      //         val task = test in (resolvedScoped.value.scope in scalafmt.key)
+      //         val previousInputs = (compileInputs in compile).value
+      //         task.map(_ => previousInputs)
+      //       }.value
+      //     )
+      // )
+    )
     .settings(resolvers ++= Seq( Resolver.jcenterRepo))
 }
 
