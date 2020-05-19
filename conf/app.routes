@@ -20,4 +20,4 @@ GET        /customer-advisors-frontend/inbox/duplicate      uk.gov.hmrc.contacta
 
 GET        /customer-advisors-frontend/inbox/unexpected   uk.gov.hmrc.contactadvisors.controllers.SecureMessageController.unexpectedV2()
 
-POST       /email                                          uk.gov.hmrc.contactadvisors.controllers.EmailController.sendEmail()
+POST       /hmrc/email                                          uk.gov.hmrc.contactadvisors.controllers.EmailController.sendEmail()

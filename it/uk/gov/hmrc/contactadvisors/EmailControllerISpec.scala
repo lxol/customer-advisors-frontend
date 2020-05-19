@@ -17,7 +17,6 @@
 package uk.gov.hmrc.contactadvisors
 
 import org.joda.time.DateTime
-import org.jsoup.Jsoup
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatestplus.play.PlaySpec
@@ -46,11 +45,11 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
       val content = DateTime.now().toString
       val fhddsRef = "XFH00000100024"
       //val wsClient = app.injector.instanceOf[WSClient]
-      println(s"""**** ${resource("secure-message/email")}""")
+      println(s"""**** ${resource("secure-message/hmrc/email")}""")
       val strideToken = authHelper.buildStrideToken().futureValue
-      println(s"**** ${strideToken}")
+      println(s"**** $strideToken")
       val response = wsClient
-        .url(resource("/secure-message/email"))
+        .url(resource("/secure-message/hmrc/email"))
         .withHttpHeaders(("authorization", strideToken))
         // .withHttpHeaders(("Csrf-Token", "nocheck"))
         .post(Map(
@@ -84,6 +83,34 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
               document.select("ul li").get(2).text() must startWith regex "External Ref: [0-9a-f-]+"
           }
      */
+    }
+    "create a message" in new TestCase {
+      val content = DateTime.now().toString
+      val fhddsRef = "XFH00000100024"
+      //val wsClient = app.injector.instanceOf[WSClient]
+      println(s"""**** ${resource("secure-message/hmrc/email")}""")
+      val strideToken = authHelper.buildStrideToken().futureValue
+      println(s"**** $strideToken")
+      val response = wsClient
+        .url(resource("/secure-message/hmrc/email"))
+        .withHttpHeaders(("authorization", strideToken))
+        // .withHttpHeaders(("Csrf-Token", "nocheck"))
+        .post(
+          Json.parse("""
+                       |{
+                       |  "to": ["example@domain.com"],
+                       |  "templateId": "seiss_claim_now",
+                       |  "parameters": {
+                       |        "name": "Mr Joe Bloggs"
+                       |  },
+                       |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
+                       |}
+        """.stripMargin)
+        )
+        .futureValue
+
+      response.status must be(ACCEPTED)
+
     }
     //   "redirect to the unexpected page when the form submission is unsuccessful" in {
 

@@ -35,6 +35,8 @@ trait MicroService {
   ExternalService("USER_DETAILS"),
   ExternalService("PREFERENCES"),
   ExternalService("IDENTITY_VERIFICATION", enableTestOnlyEndpoints = true),
+
+  ExternalService("HMRC_EMAIL_RENDERER"),
     ExternalService("EMAIL"),
     ExternalService("ENTITY_RESOLVER"),
     // ExternalService("HMRCDESKPRO"),
