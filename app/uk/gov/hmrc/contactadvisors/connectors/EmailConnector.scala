@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.contactadvisor.connectors
-
-import scala.concurrent.Future
+package uk.gov.hmrc.contactadvisors.connectors
 
 import javax.inject.{ Inject, Named, Singleton }
+import play.api.libs.json.JsValue
+import play.api.mvc.Result
+import play.api.mvc.Results._
 import uk.gov.hmrc.http.{ HeaderCarrier, HttpReads, HttpResponse }
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-import play.api.libs.json.{ JsValue, Json, Writes }
+import scala.concurrent.Future
 
 @Singleton
 class EmailConnector @Inject()(
   http: HttpClient,
   @Named("email-base-url") baseUrl: String
 ) {
+  def send(message: JsValue)(implicit headerCarrier: HeaderCarrier): Future[Result] =
+    http.POST[JsValue, Result](s"$baseUrl/hmrc/email", message)
 
-  def send(message: JsValue)(implicit headerCarrier: HeaderCarrier): Future[Unit] =
-    http.POST[JsValue, HttpResponse](s"$baseUrl/hmrc/email", message).map(_ => ())
+  implicit val resultHttpReads: HttpReads[Result] = new HttpReads[Result] {
+    override def read(method: String, url: String, response: HttpResponse): Result =
+      Status(response.status)(response.body)
+  }
 
   implicit def responseHandler: HttpReads[HttpResponse] =
     new HttpReads[HttpResponse] {
