@@ -42,51 +42,6 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
 
   "POST /customer-advisors-frontend/email" should {
     val emailUrl = resource("/secure-message/hmrc/email")
-    /*
-          "sdfafasdf" in new TestCase {
-            val content = DateTime.now().toString
-            val fhddsRef = "XFH00000100024"
-            //val wsClient = app.injector.instanceOf[WSClient]
-            println(s"""**** ${resource("secure-message/hmrc/email")}""")
-            val strideToken = authHelper.buildStrideToken().futureValue
-            println(s"**** $strideToken")
-            val response = wsClient
-              .url(resource("/secure-message/hmrc/email"))
-              .withHttpHeaders(("authorization", strideToken))
-              // .withHttpHeaders(("Csrf-Token", "nocheck"))
-              .post(Map(
-                "content"                     -> s"${content}21",
-                "subject"                     -> "mysubject",
-                "recipientTaxidentifierName"  -> "sautr",
-                "recipientTaxidentifierValue" -> fhddsRef,
-                "recipientEmail"              -> "test@test.com",
-                "recipientNameLine1"          -> "line1",
-                "messageType"                 -> "mType"
-              ))
-              .futureValue
-
-            response.status must be(OK)
-
-            // val body = response.body
-
-            // val document = Jsoup.parse(body)
-
-            /*
-                withClue("result page title") {
-                    document.title() must be("Advice creation successful")
-                }
-                withClue("result page FHDDS Reference") {
-                    document.select("ul li").get(0).text() must be(s"FHDDS Reference: $fhddsRef")
-                }
-                withClue("result page Message Id") {
-                    document.select("ul li").get(1).text() must startWith regex "Id: [0-9a-f]+"
-                }
-                withClue("result page External Ref") {
-                    document.select("ul li").get(2).text() must startWith regex "External Ref: [0-9a-f-]+"
-                }
-     */
-          }
-     */
     "send an email with valid payload and entitlements" in new TestCase {
       val response = wsClient
         .url(emailUrl)
@@ -130,44 +85,6 @@ class EmailControllerISpec extends PlaySpec with ScalaFutures with BeforeAndAfte
         .futureValue
       response.status must be(UNAUTHORIZED)
     }
-    //   "redirect to the unexpected page when the form submission is unsuccessful" in {
-
-    //     val content = DateTime.now().toString
-    //     val fhddsRef = "XZFH00000100024"
-    //     val wrongEmail = "foobar"
-    //     val wsClient = app.injector.instanceOf[WSClient]
-
-    //     val response = wsClient
-    //       .url(resource("secure-message/customer-advisors-frontend/submit"))
-    //       .post(Map(
-    //         "content"                     -> s"${content}21",
-    //         "subject"                     -> "mysubject",
-    //         "recipientTaxidentifierName"  -> "sautr",
-    //         "recipientTaxidentifierValue" -> s"$fhddsRef",
-    //         "recipientEmail"              -> s"$wrongEmail",
-    //         "recipientNameLine1"          -> "rLine1",
-    //         "messageType"                 -> "mType"
-    //       ))
-    //       .futureValue
-
-    //     response.status must be(OK)
-    //     val body = response.body
-    //     val document = Jsoup.parse(body)
-    //     withClue("result page title") {
-    //       document.title() must be("Unexpected error")
-    //     }
-
-    //     withClue("result page title") {
-    //       document.title() must be("Unexpected error")
-    //     }
-    //     withClue("result page h2") {
-    //       document.select("h2").text().trim must include(s"Failed")
-    //     }
-    //     withClue("result page alert message") {
-    //       document.select("p.alert__message").text() must include(s"$fhddsRef")
-    //     }
-    //   }
-    // }
   }
   trait TestCase {
 
