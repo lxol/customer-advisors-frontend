@@ -71,7 +71,14 @@ class EmailServiceSpec extends PlaySpec with MockitoSugar with ScalaFutures with
       verify(mockEmailConnector, never).send(any())(any())
     }
 
-    "return BadRequest on payload with extra missing parameters" in new TestCase {
+    "return BadRequest on payload with empty parameters" in new TestCase {
+      val result = emailService.doSendEmail(emptyParameters)
+      status(result) mustBe (Status.BAD_REQUEST)
+      contentAsString(result) mustBe """{"error": "invalid parameters"}"""
+      verify(mockEmailConnector, never).send(any())(any())
+    }
+
+    "return BadRequest on payload with missing parameters" in new TestCase {
       val result = emailService.doSendEmail(missingParameters)
       status(result) mustBe (Status.BAD_REQUEST)
       contentAsString(result) mustBe """{"error": "invalid parameters"}"""
@@ -103,12 +110,20 @@ class EmailServiceSpec extends PlaySpec with MockitoSugar with ScalaFutures with
                                        |}
         """.stripMargin)
 
+    val emptyParameters = Json.parse("""
+                                       |{
+                                       |  "to": ["example@domain.com"],
+                                       |  "templateId": "seiss_claim_now",
+                                       |  "parameters": {
+                                       |  },
+                                       |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
+                                       |}
+        """.stripMargin)
+
     val missingParameters = Json.parse("""
                                          |{
                                          |  "to": ["example@domain.com"],
                                          |  "templateId": "seiss_claim_now",
-                                         |  "parameters": {
-                                         |  },
                                          |  "clientId": "ba6219ed-d6be-48e1-8612-ed5e793274f7"
                                          |}
         """.stripMargin)
