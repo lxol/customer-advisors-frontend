@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.contactadvisors.controllers
 
-import javax.inject.{ Inject, Singleton }
+import javax.inject.{Inject, Singleton}
 import play.api._
-import play.api.libs.json.{ JsObject, JsValue }
+import play.api.libs.json.JsValue
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.contactadvisors.connectors.EmailConnector
+import uk.gov.hmrc.contactadvisors.service.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -34,7 +34,7 @@ import scala.concurrent.Future
 class EmailController @Inject()(
   controllerComponents: MessagesControllerComponents,
   val authConnector: AuthConnector,
-  val emailConnector: EmailConnector,
+  val emailService: EmailService,
   val env: Environment)(implicit val appConfig: uk.gov.hmrc.contactadvisors.FrontendAppConfig)
     extends FrontendController(controllerComponents) with AuthorisedFunctions {
 
@@ -44,26 +44,15 @@ class EmailController @Inject()(
       //authorised(Enrolment("roleOne") and AuthProviders(PrivilegedApplication))
 
       authorised(AuthProviders(PrivilegedApplication)) {
-        //.retrieve(Retrievals.credentials) { creds =>
-        //   .retrieve(Retrievals.allEnrolments and Retrievals.authorisedEnrolments and Retrievals.name and Retrievals.email and Retrievals.credentials) {
-        request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}""")))((json: JsValue) =>
-          (json \ "parameters").toOption
-            .collect {
-              case x: JsObject if x.keys == Set("name") => emailConnector.send(request.body.asJson.get)
-            }
-            .getOrElse(Future.successful(BadRequest("""{"error": "invalid parameters"}"""))))
+        request.body.asJson.fold(Future.successful(BadRequest("""{"error": "invalid payload"}""")))((json: JsValue) => emailService.doSendEmail(json))
       }.recover {
-          //   case _: InsufficientEnrolments =>
-          case _: NoActiveSession             => Unauthorized("not authenticated")
-          case _: InsufficientEnrolments      => Forbidden("not authorised")
-          case _: InsufficientConfidenceLevel => Forbidden("not authorised")
-          case _: UnsupportedAuthProvider     => Forbidden("not authorised")
-          case _: UnsupportedAffinityGroup    => Forbidden("not authorised")
-          case _: UnsupportedCredentialRole   => Forbidden("not authorised")
-
-          //     Future.successful(Unauthorized("""{"error": "insufficient enrolments"}"""))
-          // }
-        }
+        case _: NoActiveSession             => Unauthorized("not authenticated")
+        case _: InsufficientEnrolments      => Forbidden("not authorised")
+        case _: InsufficientConfidenceLevel => Forbidden("not authorised")
+        case _: UnsupportedAuthProvider     => Forbidden("not authorised")
+        case _: UnsupportedAffinityGroup    => Forbidden("not authorised")
+        case _: UnsupportedCredentialRole   => Forbidden("not authorised")
+      }
     }
   }
 
