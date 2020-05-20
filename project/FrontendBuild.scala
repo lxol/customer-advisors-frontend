@@ -30,6 +30,7 @@ private object AppDependencies {
     "com.typesafe.play"      %% "play-json-joda"               % "2.6.13",
     "org.jsoup"              % "jsoup"                         % "1.12.1",
     "org.skyscreamer"        % "jsonassert"                    % "1.4.0",
+    "net.codingwell"         %% "scala-guice"                  % "4.2.6",
     "com.github.tomakehurst" % "wiremock-jre8"                 % "2.21.0"               % "test,it",
     "org.pegdown"            % "pegdown"                       % "1.6.0"                % "test,it",
     "org.mockito"            % "mockito-all"                   % "1.10.19"              % "test",

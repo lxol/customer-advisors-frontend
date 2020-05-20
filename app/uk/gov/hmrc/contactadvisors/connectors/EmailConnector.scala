@@ -42,15 +42,4 @@ class EmailConnector @Inject()(
     override def read(method: String, url: String, response: HttpResponse): Result =
       Status(response.status)(response.body)
   }
-
-  /*
-  implicit def responseHandler: HttpReads[HttpResponse] =
-    new HttpReads[HttpResponse] {
-      def read(method: String, url: String, response: HttpResponse): HttpResponse =
-        response.status match {
-          case x if x >= 400 => throw new RuntimeException(response.body)
-          case _             => response
-        }
-    }
- */
 }
